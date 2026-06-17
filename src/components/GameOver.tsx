@@ -97,7 +97,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   let displayIcon = null;
 
   if (score === totalItems) {
-    rank = 'Kijiji Deity';
+    rank = 'Freejiji Deity';
     message = 'Perfect! You know the true value of trash and treasure!';
     rankColor = 'text-gold';
     displayIcon = <Medal className="w-9 h-9 text-gold" style={{ filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.4))' }} />;
@@ -125,10 +125,11 @@ export const GameOver: React.FC<GameOverProps> = ({
         <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 shadow-inner mb-2">
           {displayIcon}
         </div>
-        <h2 className="text-2xl font-extrabold tracking-tight text-white">
-          Game Over
+
+        <h2 className={`text-2xl font-extrabold uppercase tracking-wider ${rankColor}`}>
+          {rank}
         </h2>
-        
+
         {/* Giant Score Circle */}
         <div className="relative my-3 flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-tr from-[#0b090f] to-white/5 border border-white/15 shadow-xl">
           <span className="text-4xl font-black text-white">
@@ -137,9 +138,6 @@ export const GameOver: React.FC<GameOverProps> = ({
           </span>
         </div>
 
-        <h3 className={`text-lg font-bold uppercase tracking-wider ${rankColor}`}>
-          {rank}
-        </h3>
         <p className="text-xs text-white/60 px-4 max-w-sm">
           {message}
         </p>
