@@ -2,7 +2,7 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "/freejiji",
+      "destination": "/freejiji/",
       "permanent": false
     }
   ],
@@ -16,10 +16,12 @@
       "destination": "/index.html"
     },
     {
+      "source": "/freejiji/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/freejiji/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  ]
 }
