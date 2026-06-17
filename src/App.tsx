@@ -4,14 +4,13 @@ import { CardStack } from './components/CardStack';
 import type { CardStackRef } from './components/CardStack';
 import { Controls } from './components/Controls';
 import { GameOver } from './components/GameOver';
-import type { KijijiItem } from './types';
 import { useFirebaseStats } from './hooks/useFirebaseStats';
 import { useDailyItems } from './hooks/useDailyItems';
 import { ShoppingBag, Check, X, MapPin, Loader2, CalendarX, WifiOff } from 'lucide-react';
 
 function App() {
   const { stats, loading: statsLoading, saveGameResult } = useFirebaseStats();
-  const { items, gameDate, loading: itemsLoading, error: itemsError } = useDailyItems();
+  const { items, loading: itemsLoading, error: itemsError } = useDailyItems();
 
   const [gameState, setGameState] = useState<'start' | 'playing' | 'game_over'>('start');
   const [currentIndex, setCurrentIndex] = useState(0);
