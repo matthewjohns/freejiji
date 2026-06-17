@@ -163,70 +163,6 @@ function App() {
                 currentIndex={currentIndex}
                 onGuess={handleGuess}
               />
-
-              {/* Tap anywhere to Continue Guess Feedback Overlay */}
-              {feedback && (
-                <div 
-                  onClick={handleFeedbackDismiss}
-                  className="fixed inset-0 flex justify-center items-center z-30 animate-fade-in cursor-pointer"
-                >
-                  <div
-                    className={`glass-card p-6 flex flex-col items-center justify-center text-center gap-3 border-2 ${
-                      feedback.isCorrect
-                        ? 'feedback-card-correct shadow-[0_0_35px_rgba(0,255,135,0.25)]'
-                        : 'feedback-card-incorrect shadow-[0_0_35px_rgba(255,0,127,0.25)]'
-                    } backdrop-blur-2xl rounded-3xl w-[85%] max-w-[320px] animate-scale-up`}
-                  >
-                    {/* Visual reference thumbnail */}
-                    <img
-                      src={feedback.image}
-                      alt={feedback.title}
-                      className="w-32 h-20 rounded-xl object-cover border border-white/10 mb-1"
-                    />
-
-                    {/* Verdict Row (Icon & Text) */}
-                    <div className="flex items-center gap-2 select-none">
-                      {feedback.isCorrect ? (
-                        <Check className="w-6 h-6" style={{ color: '#22c55e', filter: 'drop-shadow(0 0 8px rgba(34, 197, 94, 0.6))' }} />
-                      ) : (
-                        <X className="w-6 h-6" style={{ color: '#ef4444', filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.6))' }} />
-                      )}
-                      <h3
-                        className={`text-lg font-black uppercase tracking-wider ${
-                          feedback.isCorrect ? 'text-[#00ff87]' : 'text-[#ff007f]'
-                        }`}
-                      >
-                        {feedback.isCorrect ? 'Correct!' : 'Incorrect!'}
-                      </h3>
-                    </div>
-
-                    {/* Item Reveals (Title & Description) */}
-                    <div className="flex flex-col gap-1 border-y border-white/10 py-3 my-1 w-full">
-                      {/* Location Badge */}
-                      <div className="flex items-center justify-center gap-1 text-[11px] font-semibold tracking-wider text-white/50 mb-1 select-none">
-                        <MapPin className="w-3.5 h-3.5 text-[#00d2ff]" />
-                        <span>{feedback.location}</span>
-                      </div>
-                      <h4 className="text-sm font-extrabold text-white leading-snug">
-                        {feedback.title}
-                      </h4>
-                      <p className="text-[11px] text-white/70 leading-relaxed max-h-16 overflow-y-auto pr-1">
-                        {feedback.description}
-                      </p>
-                    </div>
-
-                    {/* Actual Price */}
-                    <p className="text-xs font-semibold text-white/90">
-                      Actual Price: <span className="font-bold text-sm text-white">{feedback.isFree ? 'FREE' : `$${feedback.actualPrice.toFixed(0)}`}</span>
-                    </p>
-
-                    {/* Tap to continue indicator */}
-                    <div className="text-[9px] uppercase tracking-[2px] text-white/30 font-bold animate-pulse mt-2">
-                      Tap anywhere to continue
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <Controls
@@ -247,6 +183,70 @@ function App() {
             statsLoading={statsLoading}
             onRestart={startGame}
           />
+        )}
+
+        {/* Tap anywhere to Continue Guess Feedback Overlay */}
+        {feedback && (
+          <div 
+            onClick={handleFeedbackDismiss}
+            className="fixed inset-0 flex justify-center items-center z-50 animate-fade-in cursor-pointer bg-black/60 backdrop-blur-2xl"
+          >
+            <div
+              className={`p-6 flex flex-col items-center justify-center text-center gap-3 border-2 ${
+                feedback.isCorrect
+                  ? 'feedback-card-correct shadow-[0_0_35px_rgba(0,255,135,0.25)]'
+                  : 'feedback-card-incorrect shadow-[0_0_35px_rgba(255,0,127,0.25)]'
+              } rounded-3xl w-[85%] max-w-[320px] animate-scale-up`}
+            >
+              {/* Visual reference thumbnail */}
+              <img
+                src={feedback.image}
+                alt={feedback.title}
+                className="w-32 h-20 rounded-xl object-cover border border-white/10 mb-1"
+              />
+
+              {/* Verdict Row (Icon & Text) */}
+              <div className="flex items-center gap-2 select-none">
+                {feedback.isCorrect ? (
+                  <Check className="w-6 h-6" style={{ color: '#22c55e', filter: 'drop-shadow(0 0 8px rgba(34, 197, 94, 0.6))' }} />
+                ) : (
+                  <X className="w-6 h-6" style={{ color: '#ef4444', filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.6))' }} />
+                )}
+                <h3
+                  className={`text-lg font-black uppercase tracking-wider ${
+                    feedback.isCorrect ? 'text-[#00ff87]' : 'text-[#ff007f]'
+                  }`}
+                >
+                  {feedback.isCorrect ? 'Correct!' : 'Incorrect!'}
+                </h3>
+              </div>
+
+              {/* Item Reveals (Title & Description) */}
+              <div className="flex flex-col gap-1 border-y border-white/10 py-3 my-1 w-full">
+                {/* Location Badge */}
+                <div className="flex items-center justify-center gap-1 text-[11px] font-semibold tracking-wider text-white/50 mb-1 select-none">
+                  <MapPin className="w-3.5 h-3.5 text-[#00d2ff]" />
+                  <span>{feedback.location}</span>
+                </div>
+                <h4 className="text-sm font-extrabold text-white leading-snug">
+                  {feedback.title}
+                </h4>
+                <p className="text-[11px] text-white/70 leading-relaxed max-h-16 overflow-y-auto pr-1">
+                  {feedback.description}
+                </p>
+              </div>
+
+              {/* Actual Price */}
+              <p className="text-xs font-semibold text-white/90">
+                Actual Price: <span className="font-bold text-sm text-white">{feedback.isFree ? 'FREE' : `$${feedback.actualPrice.toFixed(0)}`}</span>
+              </p>
+
+              {/* Tap to continue indicator */}
+              <div className="text-[9px] uppercase tracking-[2px] text-white/30 font-bold animate-pulse mt-2">
+                Tap anywhere to continue
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </>
