@@ -259,7 +259,7 @@ function pickRandom(pool, usedIds) {
 
 async function main() {
   console.log('\n🎮  Freejiji Weekly Content Generator');
-  console.log(`📅  Generating ${DAYS_TO_GENERATE} days starting tomorrow (Toronto time)`);
+  console.log(`📅  Generating ${DAYS_TO_GENERATE} days starting today (Toronto time)`);
   if (DRY_RUN) console.log('🧪  DRY RUN — nothing written to Firestore\n');
 
   let db;
@@ -290,7 +290,7 @@ async function main() {
 
   console.log('📅  Building daily item sets...\n');
 
-  for (let d = 1; d <= DAYS_TO_GENERATE; d++) {
+  for (let d = 0; d < DAYS_TO_GENERATE; d++) {
     const dateStr = getTorontoDateString(d);
     const dayItems = [];
 

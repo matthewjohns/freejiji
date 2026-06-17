@@ -147,7 +147,6 @@ function App() {
                   <CalendarX className="w-4 h-4" />
                   No game available yet today — check back soon!
                 </div>
-                <p className="text-xs text-white/30">New games go live at 3:00 AM Toronto time</p>
               </div>
             ) : itemsError === 'fetch-error' ? (
               <div className="w-full flex flex-col items-center gap-3">

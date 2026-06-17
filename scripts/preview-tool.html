@@ -536,7 +536,7 @@
       // Load this week's draft days (next 7 days)
       const today = new Date();
       const dates = [];
-      for (let d = 1; d <= 7; d++) {
+      for (let d = 0; d < 7; d++) {
         const dt = new Date(today);
         dt.setDate(dt.getDate() + d);
         dates.push(new Intl.DateTimeFormat('en-CA', {
