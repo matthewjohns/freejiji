@@ -122,20 +122,17 @@ function App() {
               </div>
 
               <div>
-                <h1 className="text-4xl font-black tracking-tight leading-none brand-gradient pb-2">
+                <h1 className="text-6xl font-black tracking-tight leading-none brand-gradient pb-2">
                   Freejiji
                 </h1>
-                <p className="text-xs tracking-[4px] uppercase text-white/40 font-bold">
-                  The Swiping Game
+                <p className="text-sm tracking-[2px] uppercase text-white/40 font-bold">
+                  ONLINE CLASSIFIED SWIPING GAME
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 max-w-sm px-2">
-                <p className="text-sm text-white/80 font-medium">
-                  Tinder meets Kijiji classifieds.
-                </p>
-                <p className="text-xs text-white/60 leading-relaxed bg-white/5 border border-white/5 p-4 rounded-2xl">
-                  We show you 5 weird and wonderful Kijiji listings. Swipe <span className="text-[#00ff87] font-bold">Right</span> if you think they are listed for <span className="text-[#00ff87] font-bold">FREE</span>, or swipe <span className="text-[#ff007f] font-bold">Left</span> if they are <span className="text-[#ff007f] font-bold">PAID</span>.
+                <p className="text-base text-white/80 leading-relaxed bg-white/5 border border-white/5 p-4 rounded-2xl">
+                  We show you 5 online classified listings. Swipe <span className="text-[#00ff87] font-bold">Right</span> if you think they are listed for <span className="text-[#00ff87] font-bold">FREE</span>, or swipe <span className="text-[#ff007f] font-bold">Left</span> if they are <span className="text-[#ff007f] font-bold">PAID</span>.
                 </p>
               </div>
             </div>
@@ -143,7 +140,7 @@ function App() {
             {/* CTA Button */}
             <button
               onClick={startGame}
-              className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-sm tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               Start Swiping
             </button>
