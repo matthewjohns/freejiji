@@ -1,0 +1,25 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/freejiji",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/freejiji/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/freejiji",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/freejiji/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

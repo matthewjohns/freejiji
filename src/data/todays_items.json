@@ -1,0 +1,52 @@
+[
+  {
+    "id": "item-1",
+    "title": "Vintage Velvet Coffin",
+    "description": "1970s retro style. Velvet-lined interior. Slightly used for a stage play, in excellent shape. Pick up only.",
+    "image": "/assets/coffin.png",
+    "actualPrice": 450.00,
+    "isFree": false,
+    "listingUrl": "https://www.kijiji.ca/v-art-collectibles/ottawa/vintage-1970s-velvet-coffin/123456789",
+    "location": "Ottawa, ON"
+  },
+  {
+    "id": "item-2",
+    "title": "Half-Used Birthday Candles",
+    "description": "A random cardboard box full of candles. Mostly half-used, some only lit for 5 seconds. Perfect for birthdays on a budget.",
+    "image": "/assets/candles.png",
+    "actualPrice": 0.00,
+    "isFree": true,
+    "listingUrl": "https://www.kijiji.ca/v-free-stuff/toronto/free-birthday-candles-box/234567890",
+    "location": "Toronto, ON"
+  },
+  {
+    "id": "item-3",
+    "title": "Haunted Victorian Doll",
+    "description": "Genuine porcelain doll. Inherited from a strange aunt. Whispers softly at 3 AM. Needs a new home immediately.",
+    "image": "/assets/doll.png",
+    "actualPrice": 35.00,
+    "isFree": false,
+    "listingUrl": "https://www.kijiji.ca/v-buy-sell-other/vancouver/haunted-victorian-doll/345678901",
+    "location": "Vancouver, BC"
+  },
+  {
+    "id": "item-4",
+    "title": "Fresh Rocky Mountain Air",
+    "description": "Authentic fresh air collected in a mason jar in Banff, Alberta. Feel the mountain breeze in your home. Cap is tightly sealed.",
+    "image": "/assets/mountain_air.png",
+    "actualPrice": 15.00,
+    "isFree": false,
+    "listingUrl": "https://www.kijiji.ca/v-hobbies-craft/calgary/rocky-mountain-air-jar/456789012",
+    "location": "Banff, AB"
+  },
+  {
+    "id": "item-5",
+    "title": "Backyard Dirt (You Dig It)",
+    "description": "Free high-quality organic soil from my garden. Bring your own shovel and buckets. Take as much as you can dig out.",
+    "image": "/assets/dirt.png",
+    "actualPrice": 0.00,
+    "isFree": true,
+    "listingUrl": "https://www.kijiji.ca/v-free-stuff/montreal/free-dirt-must-dig/567890123",
+    "location": "Montreal, QC"
+  }
+]
