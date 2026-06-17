@@ -763,3 +763,24 @@ body {
   color: #000000;
   box-shadow: 0 0 8px rgba(0, 255, 135, 0.4);
 }
+
+/* Correct and Incorrect Styles */
+.text-correct {
+  color: #00ff87 !important;
+}
+
+.text-incorrect {
+  color: #ff007f !important;
+}
+
+.badge-correct {
+  background-color: rgba(0, 255, 135, 0.1) !important;
+  border-color: rgba(0, 255, 135, 0.2) !important;
+  color: #00ff87 !important;
+}
+
+.badge-incorrect {
+  background-color: rgba(255, 0, 127, 0.1) !important;
+  border-color: rgba(255, 0, 127, 0.2) !important;
+  color: #ff007f !important;
+}

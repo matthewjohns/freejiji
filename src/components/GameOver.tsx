@@ -127,11 +127,7 @@ export const GameOver: React.FC<GameOverProps> = ({
     0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
   };
 
-  const totalGames = Object.values(distribution).reduce((a, b) => a + b, 0);
-  const wonGames = Object.entries(distribution)
-    .filter(([s]) => Number(s) >= 5) // score >= 5 is considered a "win"
-    .reduce((sum, [_, count]) => sum + count, 0);
-  const winPercentage = totalGames > 0 ? Math.round((wonGames / totalGames) * 100) : 0;
+  const avgScore = stats && stats.gamesPlayed > 0 ? (stats.allTimeScore / stats.gamesPlayed).toFixed(1) : '0';
 
   const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const maxCount = Math.max(...scores.map(s => distribution[s] || 0), 1);
@@ -174,17 +170,24 @@ export const GameOver: React.FC<GameOverProps> = ({
 
       {/* Recap List */}
       <div className="flex-1 flex flex-col gap-2 my-3 overflow-hidden">
-        <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30 px-1">
-          Today's Items Recap
-        </h4>
+        <div className="flex justify-between items-center px-1">
+          <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30">
+            Today's Items Recap
+          </h4>
+          <span className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30">
+            Global Score
+          </span>
+        </div>
         
         <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-2">
           {items.map((item, index) => {
-            const isCorrect = guesses[index] === true;
-            const guessedFree = userSwipes[index];
+            const hasHistoryData = guesses && guesses.length > 0;
+            const isCorrect = hasHistoryData ? guesses[index] === true : false;
+            const guessedFree = hasHistoryData ? userSwipes[index] : null;
+            
             const totalCount = item.totalCount || 0;
             const correctCount = item.correctCount || 0;
-            const globalPercent = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : (isCorrect ? 100 : 0);
+            const globalPercent = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : (hasHistoryData && isCorrect ? 100 : 0);
 
             return (
               <div
@@ -201,7 +204,9 @@ export const GameOver: React.FC<GameOverProps> = ({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h5 className={`text-xs font-bold truncate leading-tight ${
-                    isCorrect ? 'text-[#00ff87]' : 'text-[#ff007f]'
+                    hasHistoryData 
+                      ? (isCorrect ? 'text-correct' : 'text-incorrect')
+                      : 'text-white'
                   }`}>
                     {item.title}
                   </h5>
@@ -211,12 +216,16 @@ export const GameOver: React.FC<GameOverProps> = ({
                     }`}>
                       Actual: {item.isFree ? 'FREE' : `$${item.actualPrice.toFixed(0)}`}
                     </span>
-                    <span className={`text-[10px] font-semibold ${
-                      isCorrect ? 'text-[#00ff87]/80' : 'text-[#ff007f]/80'
-                    }`}>
-                      Guess: {guessedFree ? 'Free' : 'Paid'}
-                    </span>
-                    <span className="text-[10px] text-white/30">•</span>
+                    {hasHistoryData && (
+                      <>
+                        <span className={`text-[10px] font-semibold ${
+                          isCorrect ? 'text-correct' : 'text-incorrect'
+                        }`}>
+                          Guess: {guessedFree ? 'Free' : 'Paid'}
+                        </span>
+                        <span className="text-[10px] text-white/30">•</span>
+                      </>
+                    )}
                     <span className="text-[10px] text-white/40">
                       {item.location}
                     </span>
@@ -226,9 +235,9 @@ export const GameOver: React.FC<GameOverProps> = ({
                 {/* Score Status (Global correctness badge) & External Link */}
                 <div className="flex items-center gap-2">
                   <div className={`text-[11px] font-black px-2 py-0.5 rounded-lg border ${
-                    isCorrect
-                      ? 'bg-[#00ff87]/10 border-[#00ff87]/20 text-[#00ff87]'
-                      : 'bg-[#ff007f]/10 border-[#ff007f]/20 text-[#ff007f]'
+                    hasHistoryData
+                      ? (isCorrect ? 'badge-correct' : 'badge-incorrect')
+                      : 'bg-white/5 border-white/10 text-white/70'
                   }`}>
                     {globalPercent}%
                   </div>
@@ -296,8 +305,8 @@ export const GameOver: React.FC<GameOverProps> = ({
                 <span className="stats-label">Played</span>
               </div>
               <div className="flex flex-col">
-                <span className="stats-number">{winPercentage}%</span>
-                <span className="stats-label">Win %</span>
+                <span className="stats-number">{avgScore}</span>
+                <span className="stats-label">Avg Score</span>
               </div>
               <div className="flex flex-col">
                 <span className="stats-number text-[#00ff87]">🔥 {currentStreak}</span>
