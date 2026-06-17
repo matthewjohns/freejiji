@@ -99,23 +99,23 @@ export const GameOver: React.FC<GameOverProps> = ({
   let displayIcon = null;
 
   if (score === totalItems) {
-    rank = 'Freejiji Deity';
-    message = 'Perfect! You know the true value of trash and treasure!';
+    rank = 'Freejiji God';
+    message = 'Perfect! Have some internet bragging rights on the house.';
     rankColor = 'text-gold';
     displayIcon = <Medal className="w-9 h-9 text-gold" style={{ filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.4))' }} />;
   } else if (percentage >= 75) {
     rank = 'Thrift Store Expert';
-    message = 'So close! You have a great eye for bargain hunting.';
+    message = 'Pretty Good! Still, some room for improvement.';
     rankColor = 'text-silver';
     displayIcon = <Medal className="w-9 h-9 text-silver" style={{ filter: 'drop-shadow(0 0 6px rgba(203, 213, 225, 0.3))' }} />;
   } else if (percentage >= 50) {
     rank = 'Garage Sale Regular';
-    message = 'Not bad! You could spot a deal, but missed a couple.';
+    message = "Not great! Maybe it's your first time, oh well.";
     rankColor = 'text-bronze';
     displayIcon = <Medal className="w-9 h-9 text-bronze" style={{ filter: 'drop-shadow(0 0 6px rgba(205, 127, 50, 0.3))' }} />;
   } else {
     rank = 'Retail Price Victim';
-    message = 'Ouch! You might be giving away gold for free.';
+    message = 'Oof! Did you think today was opposite day?';
     rankColor = 'text-disappointed';
     displayIcon = <Frown className="w-9 h-9 text-disappointed" style={{ filter: 'drop-shadow(0 0 6px rgba(244, 63, 94, 0.3))' }} />;
   }
