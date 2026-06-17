@@ -10,7 +10,7 @@ import { ShoppingBag, Check, X, MapPin, Loader2, CalendarX, WifiOff } from 'luci
 import type { KijijiItem } from './types';
 
 function App() {
-  const { user, stats, loading: statsLoading, saveGameResult, fetchTodayHistory } = useFirebaseStats();
+  const { user, stats, loading: statsLoading, saveGameResult, fetchTodayHistory, resetStats } = useFirebaseStats();
   const { items, gameDate, loading: itemsLoading, error: itemsError } = useDailyItems();
 
   const [gameState, setGameState] = useState<'start' | 'playing' | 'game_over'>('start');
@@ -262,6 +262,14 @@ function App() {
             stats={stats}
             statsLoading={statsLoading}
             onRestart={startGame}
+            onResetStats={async () => {
+              const ok = await resetStats(gameDate);
+              if (ok) {
+                setHasPlayedToday(false);
+                setCompletedGameData(null);
+                setGameState('start');
+              }
+            }}
           />
         )}
 

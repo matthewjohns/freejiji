@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 export interface UserStats {
@@ -239,11 +239,42 @@ export const useFirebaseStats = () => {
     }
   };
 
+  const resetStats = async (gameDate: string) => {
+    if (!user) return false;
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const initialStats: UserStats = {
+        uid: user.uid,
+        createdAt: serverTimestamp(),
+        lastActive: serverTimestamp(),
+        allTimeScore: 0,
+        gamesPlayed: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+        lastPlayedDate: '',
+        scoreDistribution: {
+          0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+        }
+      };
+      await setDoc(userDocRef, initialStats);
+
+      const scoreDocRef = doc(db, 'users', user.uid, 'history', gameDate);
+      await deleteDoc(scoreDocRef);
+
+      setStats(initialStats);
+      return true;
+    } catch (error) {
+      console.error('Failed to reset stats:', error);
+      return false;
+    }
+  };
+
   return {
     user,
     stats,
     loading,
     saveGameResult,
-    fetchTodayHistory
+    fetchTodayHistory,
+    resetStats
   };
 };

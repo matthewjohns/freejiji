@@ -12,6 +12,7 @@ interface GameOverProps {
   stats: UserStats | null;
   statsLoading: boolean;
   onRestart: () => void;
+  onResetStats?: () => void;
 }
 
 export const GameOver: React.FC<GameOverProps> = ({
@@ -21,6 +22,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   userSwipes,
   stats,
   statsLoading,
+  onResetStats,
 }) => {
   const totalItems = items.length;
   const [copied, setCopied] = useState(false);
@@ -129,11 +131,13 @@ export const GameOver: React.FC<GameOverProps> = ({
 
   const avgScore = stats && stats.gamesPlayed > 0 ? (stats.allTimeScore / stats.gamesPlayed).toFixed(1) : '0';
 
+  const totalGamesInDist = Object.values(distribution).reduce((a, b) => a + b, 0);
+  const divisor = totalGamesInDist > 0 ? totalGamesInDist : 1;
+
   const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const maxCount = Math.max(...scores.map(s => distribution[s] || 0), 1);
   const distributionRows = scores.map(s => {
     const count = distribution[s] || 0;
-    const pct = (count / maxCount) * 100;
+    const pct = (count / divisor) * 100;
     const isCurrent = s === score;
     return {
       scoreLabel: s,
@@ -192,7 +196,11 @@ export const GameOver: React.FC<GameOverProps> = ({
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-200"
+                className={`flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-200 ${
+                  hasHistoryData
+                    ? (isCorrect ? 'border-[#00ff87]/20 bg-[#00ff87]/5' : 'border-[#ff007f]/20 bg-[#ff007f]/5')
+                    : ''
+                }`}
               >
                 {/* Thumbnail */}
                 <img
@@ -202,31 +210,29 @@ export const GameOver: React.FC<GameOverProps> = ({
                 />
 
                 {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <h5 className={`text-xs font-bold truncate leading-tight ${
-                    hasHistoryData 
-                      ? (isCorrect ? 'text-correct' : 'text-incorrect')
-                      : 'text-white'
-                  }`}>
+                <div className={`flex-1 min-w-0 ${
+                  hasHistoryData
+                    ? (isCorrect ? 'text-correct' : 'text-incorrect')
+                    : 'text-white/70'
+                }`}>
+                  <h5 className="text-xs font-bold truncate leading-tight">
                     {item.title}
                   </h5>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px]">
+                    <span className={`font-bold px-1.5 py-0.5 rounded-md ${
                       item.isFree ? 'bg-[#00ff87]/20 text-[#00ff87]' : 'bg-white/10 text-white/70'
                     }`}>
                       Actual: {item.isFree ? 'FREE' : `$${item.actualPrice.toFixed(0)}`}
                     </span>
                     {hasHistoryData && (
                       <>
-                        <span className={`text-[10px] font-semibold ${
-                          isCorrect ? 'text-correct' : 'text-incorrect'
-                        }`}>
+                        <span className="font-semibold">
                           Guess: {guessedFree ? 'Free' : 'Paid'}
                         </span>
-                        <span className="text-[10px] text-white/30">•</span>
+                        <span className="text-white/30">•</span>
                       </>
                     )}
-                    <span className="text-[10px] text-white/40">
+                    <span className="opacity-80">
                       {item.location}
                     </span>
                   </div>
@@ -338,6 +344,22 @@ export const GameOver: React.FC<GameOverProps> = ({
                 );
               })}
             </div>
+
+            {/* Reset Stats Button */}
+            {onResetStats && (
+              <div className="mt-5 pt-3 border-t border-white/5 flex justify-center">
+                <button
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to completely reset your stats and replay today's game?")) {
+                      onResetStats();
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-red-950/40 border border-red-500/20 text-red-400 hover:bg-red-950/60 font-bold text-[10px] uppercase tracking-wider transition-all duration-200 cursor-pointer"
+                >
+                  Reset Progress
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
