@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, ExternalLink, CheckCircle2, XCircle, Medal, Frown, Share2 } from 'lucide-react';
+import { ExternalLink, Medal, Frown, Share2, BarChart3, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { KijijiItem } from '../types';
 import type { UserStats } from '../hooks/useFirebaseStats';
@@ -21,10 +21,10 @@ export const GameOver: React.FC<GameOverProps> = ({
   userSwipes,
   stats,
   statsLoading,
-  onRestart,
 }) => {
   const totalItems = items.length;
   const [copied, setCopied] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   useEffect(() => {
     // Only fire confetti on a perfect score
@@ -118,34 +118,63 @@ export const GameOver: React.FC<GameOverProps> = ({
     displayIcon = <Frown className="w-9 h-9 text-disappointed" style={{ filter: 'drop-shadow(0 0 6px rgba(244, 63, 94, 0.3))' }} />;
   }
 
+  // Calculate statistics for score distribution modal
+  const gamesPlayed = stats?.gamesPlayed || 0;
+  const currentStreak = stats?.currentStreak || 0;
+  const maxStreak = stats?.maxStreak || 0;
+  
+  const distribution = stats?.scoreDistribution || {
+    0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+  };
+
+  const totalGames = Object.values(distribution).reduce((a, b) => a + b, 0);
+  const wonGames = Object.entries(distribution)
+    .filter(([s]) => Number(s) >= 5) // score >= 5 is considered a "win"
+    .reduce((sum, [_, count]) => sum + count, 0);
+  const winPercentage = totalGames > 0 ? Math.round((wonGames / totalGames) * 100) : 0;
+
+  const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const maxCount = Math.max(...scores.map(s => distribution[s] || 0), 1);
+  const distributionRows = scores.map(s => {
+    const count = distribution[s] || 0;
+    const pct = (count / maxCount) * 100;
+    const isCurrent = s === score;
+    return {
+      scoreLabel: s,
+      count,
+      pct,
+      isCurrent,
+    };
+  });
+
   return (
-    <div className="flex-1 flex flex-col justify-between w-full h-full select-none glass-card p-6 overflow-hidden border-white/10 bg-black/30 backdrop-blur-2xl">
+    <div className="flex-1 flex flex-col justify-between w-full h-full select-none glass-card p-4 overflow-hidden border-white/10 bg-black/30 backdrop-blur-2xl">
       {/* Header Summary */}
-      <div className="flex flex-col items-center text-center gap-2 pt-2">
-        <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 shadow-inner mb-2">
+      <div className="flex flex-col items-center text-center gap-1.5 pt-1">
+        <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 shadow-inner mb-1">
           {displayIcon}
         </div>
 
-        <h2 className={`text-2xl font-extrabold uppercase tracking-wider ${rankColor}`}>
+        <h2 className={`text-xl font-extrabold uppercase tracking-wider ${rankColor}`}>
           {rank}
         </h2>
 
-        {/* Giant Score Circle */}
-        <div className="relative my-3 flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-tr from-[#0b090f] to-white/5 border border-white/15 shadow-xl">
-          <span className="text-4xl font-black text-white">
+        {/* Giant Score Circle (Shrunk for better mobile layouts) */}
+        <div className="relative my-2 flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-[#0b090f] to-white/5 border border-white/15 shadow-xl">
+          <span className="text-2xl font-black text-white">
             {score}
-            <span className="text-lg text-white/40 font-bold">/{totalItems}</span>
+            <span className="text-sm text-white/40 font-bold">/{totalItems}</span>
           </span>
         </div>
 
-        <p className="text-xs text-white/60 px-4 max-w-sm">
+        <p className="text-[11px] text-white/60 px-4 max-w-sm">
           {message}
         </p>
       </div>
 
       {/* Recap List */}
-      <div className="flex-1 flex flex-col gap-3 my-4 overflow-hidden">
-        <h4 className="text-xs font-bold uppercase tracking-[2.5px] text-white/30 px-1">
+      <div className="flex-1 flex flex-col gap-2 my-3 overflow-hidden">
+        <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30 px-1">
           Today's Items Recap
         </h4>
         
@@ -153,22 +182,27 @@ export const GameOver: React.FC<GameOverProps> = ({
           {items.map((item, index) => {
             const isCorrect = guesses[index] === true;
             const guessedFree = userSwipes[index];
+            const totalCount = item.totalCount || 0;
+            const correctCount = item.correctCount || 0;
+            const globalPercent = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : (isCorrect ? 100 : 0);
 
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-200"
+                className="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-200"
               >
                 {/* Thumbnail */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-12 h-12 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                  className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
                 />
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h5 className="text-xs font-bold text-white truncate leading-tight">
+                  <h5 className={`text-xs font-bold truncate leading-tight ${
+                    isCorrect ? 'text-[#00ff87]' : 'text-[#ff007f]'
+                  }`}>
                     {item.title}
                   </h5>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -177,7 +211,9 @@ export const GameOver: React.FC<GameOverProps> = ({
                     }`}>
                       Actual: {item.isFree ? 'FREE' : `$${item.actualPrice.toFixed(0)}`}
                     </span>
-                    <span className="text-[10px] text-white/40">
+                    <span className={`text-[10px] font-semibold ${
+                      isCorrect ? 'text-[#00ff87]/80' : 'text-[#ff007f]/80'
+                    }`}>
                       Guess: {guessedFree ? 'Free' : 'Paid'}
                     </span>
                     <span className="text-[10px] text-white/30">•</span>
@@ -187,22 +223,24 @@ export const GameOver: React.FC<GameOverProps> = ({
                   </div>
                 </div>
 
-                {/* Score Status & External Link */}
-                <div className="flex items-center gap-3">
-                  {isCorrect ? (
-                    <CheckCircle2 className="w-5 h-5 text-[#00ff87] flex-shrink-0" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-[#ff007f] flex-shrink-0" />
-                  )}
+                {/* Score Status (Global correctness badge) & External Link */}
+                <div className="flex items-center gap-2">
+                  <div className={`text-[11px] font-black px-2 py-0.5 rounded-lg border ${
+                    isCorrect
+                      ? 'bg-[#00ff87]/10 border-[#00ff87]/20 text-[#00ff87]'
+                      : 'bg-[#ff007f]/10 border-[#ff007f]/20 text-[#ff007f]'
+                  }`}>
+                    {globalPercent}%
+                  </div>
                   
                   <a
                     href={item.listingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`View ${item.title} original listing`}
-                    className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
+                    className="p-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
@@ -211,59 +249,89 @@ export const GameOver: React.FC<GameOverProps> = ({
         </div>
       </div>
 
-      {/* Stats Panel */}
-      <div className="w-full flex flex-col gap-2 mt-1 select-none">
-        <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30 px-1">
-          Your Lifetime Stats
-        </h4>
-        {statsLoading ? (
-          <div className="flex justify-center items-center py-4 text-xs text-white/40">
-            Loading Stats...
-          </div>
-        ) : stats ? (
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-0.5 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Streak</span>
-              <span className="text-sm font-bold text-[#00ff87]">🔥 {stats.currentStreak} Days</span>
-            </div>
-            <div className="flex flex-col gap-0.5 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Max Streak</span>
-              <span className="text-sm font-bold text-[#00d2ff]">⚡️ {stats.maxStreak} Days</span>
-            </div>
-            <div className="flex flex-col gap-0.5 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">All Time Score</span>
-              <span className="text-sm font-bold text-white">🏆 {stats.allTimeScore} pts</span>
-            </div>
-            <div className="flex flex-col gap-0.5 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Played</span>
-              <span className="text-sm font-bold text-white/80">🎮 {stats.gamesPlayed} games</span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center items-center py-4 text-xs text-white/40">
-            Could not load stats.
-          </div>
-        )}
-      </div>
-
       {/* Action Footer */}
-      <div className="flex flex-col gap-2 w-full mt-2 flex-shrink-0">
+      <div className="flex gap-2 w-full mt-2 flex-shrink-0">
         <button
           onClick={shareScore}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/10 border border-white/10 text-white font-extrabold text-sm tracking-wider uppercase transition-all duration-300 hover:bg-white/15 active:scale-[0.98] cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/10 border border-white/10 text-white font-extrabold text-xs tracking-wider uppercase transition-all duration-300 hover:bg-white/15 active:scale-[0.98] cursor-pointer"
         >
           <Share2 className="w-4 h-4" />
           {copied ? 'Copied!' : 'Share Score'}
         </button>
 
         <button
-          onClick={onRestart}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-sm tracking-wider uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] active:scale-[0.98] cursor-pointer"
+          onClick={() => setShowStatsModal(true)}
+          className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-xs tracking-wider uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] active:scale-[0.98] cursor-pointer"
         >
-          <RefreshCw className="w-4 h-4" />
-          Play Again
+          <BarChart3 className="w-4 h-4" />
+          {statsLoading ? 'Loading Stats...' : 'View Stats'}
         </button>
       </div>
+
+      {/* Statistics and Score Distribution Modal Overlay */}
+      {showStatsModal && (
+        <div 
+          className="stats-modal-overlay"
+          onClick={() => setShowStatsModal(false)}
+        >
+          <div 
+            className="stats-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowStatsModal(false)}
+              className="stats-modal-close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Title */}
+            <h3 className="stats-modal-title">STATISTICS</h3>
+
+            {/* Statistics Row */}
+            <div className="stats-grid select-none">
+              <div className="flex flex-col">
+                <span className="stats-number">{gamesPlayed}</span>
+                <span className="stats-label">Played</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="stats-number">{winPercentage}%</span>
+                <span className="stats-label">Win %</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="stats-number text-[#00ff87]">🔥 {currentStreak}</span>
+                <span className="stats-label">Current</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="stats-number text-[#00d2ff]">⚡️ {maxStreak}</span>
+                <span className="stats-label">Max</span>
+              </div>
+            </div>
+
+            {/* Guess Distribution */}
+            <h3 className="stats-modal-title">SCORE DISTRIBUTION</h3>
+
+            <div className="dist-container select-none">
+              {distributionRows.map(({ scoreLabel, count, pct, isCurrent }) => {
+                return (
+                  <div key={scoreLabel} className="dist-row">
+                    <span className="dist-label">{scoreLabel}</span>
+                    <div className="dist-track">
+                      <div
+                        className={`dist-bar ${isCurrent ? 'active' : 'inactive'}`}
+                        style={{ width: `${Math.max(pct, 8)}%` }}
+                      >
+                        {count}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

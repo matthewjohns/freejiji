@@ -7,4 +7,6 @@ export interface KijijiItem {
   isFree: boolean;
   listingUrl: string;
   location: string;
+  correctCount?: number;
+  totalCount?: number;
 }

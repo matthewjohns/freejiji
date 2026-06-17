@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CardStack } from './components/CardStack';
 import type { CardStackRef } from './components/CardStack';
@@ -7,10 +7,11 @@ import { GameOver } from './components/GameOver';
 import { useFirebaseStats } from './hooks/useFirebaseStats';
 import { useDailyItems } from './hooks/useDailyItems';
 import { ShoppingBag, Check, X, MapPin, Loader2, CalendarX, WifiOff } from 'lucide-react';
+import type { KijijiItem } from './types';
 
 function App() {
-  const { stats, loading: statsLoading, saveGameResult } = useFirebaseStats();
-  const { items, loading: itemsLoading, error: itemsError } = useDailyItems();
+  const { user, stats, loading: statsLoading, saveGameResult, fetchTodayHistory } = useFirebaseStats();
+  const { items, gameDate, loading: itemsLoading, error: itemsError } = useDailyItems();
 
   const [gameState, setGameState] = useState<'start' | 'playing' | 'game_over'>('start');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,9 +29,47 @@ function App() {
     location: string;
   } | null>(null);
 
+  const [localItems, setLocalItems] = useState<KijijiItem[]>([]);
+  const [hasPlayedToday, setHasPlayedToday] = useState(false);
+  const [completedGameData, setCompletedGameData] = useState<{
+    score: number;
+    guesses: (boolean | null)[];
+    userSwipes: boolean[];
+  } | null>(null);
+
   const cardStackRef = useRef<CardStackRef>(null);
 
+  // Sync loaded daily items to local state
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setLocalItems(items);
+    }
+  }, [items]);
+
+  // Check today's history to see if the user has already played
+  useEffect(() => {
+    if (!user || !gameDate) return;
+
+    let cancelled = false;
+    async function checkHistory() {
+      const historyData = await fetchTodayHistory(gameDate);
+      if (cancelled) return;
+      if (historyData) {
+        setHasPlayedToday(true);
+        setCompletedGameData(historyData);
+      } else {
+        setHasPlayedToday(false);
+        setCompletedGameData(null);
+      }
+    }
+    checkHistory();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, gameDate, fetchTodayHistory]);
+
   const startGame = () => {
+    if (hasPlayedToday) return; // Prevent playing again if already played
     setGameState('playing');
     setCurrentIndex(0);
     setGuesses(Array(items.length).fill(null));
@@ -38,6 +77,14 @@ function App() {
     setScore(0);
     setFeedback(null);
     setIsTransitioning(false);
+  };
+
+  const showResults = () => {
+    if (!completedGameData) return;
+    setScore(completedGameData.score);
+    setGuesses(completedGameData.guesses);
+    setUserSwipes(completedGameData.userSwipes);
+    setGameState('game_over');
   };
 
   const handleGuess = (isCorrect: boolean, index: number) => {
@@ -73,7 +120,7 @@ function App() {
     });
   };
 
-  const handleFeedbackDismiss = () => {
+  const handleFeedbackDismiss = async () => {
     if (!feedback) return;
 
     setFeedback(null);
@@ -82,7 +129,12 @@ function App() {
     setIsTransitioning(false);
 
     if (nextIndex >= items.length) {
-      saveGameResult(score);
+      const updated = await saveGameResult(score, guesses, userSwipes, localItems, gameDate);
+      if (updated) {
+        setLocalItems(updated);
+      }
+      setHasPlayedToday(true);
+      setCompletedGameData({ score, guesses, userSwipes });
       setGameState('game_over');
     }
   };
@@ -155,6 +207,13 @@ function App() {
                   Couldn't load today's game — check your connection
                 </div>
               </div>
+            ) : hasPlayedToday ? (
+              <button
+                onClick={showResults}
+                className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                Show Results
+              </button>
             ) : (
               <button
                 onClick={startGame}
@@ -196,7 +255,7 @@ function App() {
         {/* ── Game over state ── */}
         {gameState === 'game_over' && (
           <GameOver
-            items={items}
+            items={localItems}
             score={score}
             guesses={guesses}
             userSwipes={userSwipes}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 export interface UserStats {
@@ -13,6 +13,7 @@ export interface UserStats {
   currentStreak: number;
   maxStreak: number;
   lastPlayedDate: string;
+  scoreDistribution?: { [key: number]: number };
 }
 
 const getLocalDateString = (d: Date) => {
@@ -73,9 +74,22 @@ export const useFirebaseStats = () => {
           });
         }
 
+        // Handle migrating existing users who don't have scoreDistribution
+        let scoreDistribution = data.scoreDistribution;
+        if (!scoreDistribution) {
+          scoreDistribution = {
+            0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+          };
+          await updateDoc(userDocRef, {
+            scoreDistribution,
+            lastActive: serverTimestamp()
+          });
+        }
+
         setStats({
           ...data,
-          currentStreak
+          currentStreak,
+          scoreDistribution
         });
       } else {
         // Initialize new user stats doc
@@ -88,6 +102,9 @@ export const useFirebaseStats = () => {
           currentStreak: 0,
           maxStreak: 0,
           lastPlayedDate: '',
+          scoreDistribution: {
+            0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+          }
         };
         await setDoc(userDocRef, initialStats);
 
@@ -104,12 +121,37 @@ export const useFirebaseStats = () => {
     }
   };
 
-  const saveGameResult = async (score: number) => {
-    if (!user || !stats) return;
+  const fetchTodayHistory = async (todayStr: string) => {
+    if (!auth.currentUser) return null;
+    try {
+      const scoreDocRef = doc(db, 'users', auth.currentUser.uid, 'history', todayStr);
+      const snap = await getDoc(scoreDocRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        return {
+          score: data.score as number,
+          guesses: (data.guesses || []) as (boolean | null)[],
+          userSwipes: (data.userSwipes || []) as boolean[],
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching today history:', error);
+    }
+    return null;
+  };
+
+  const saveGameResult = async (
+    score: number,
+    guesses: (boolean | null)[],
+    userSwipes: boolean[],
+    currentItems: any[],
+    gameDate: string
+  ) => {
+    if (!user || !stats) return null;
 
     try {
       const userDocRef = doc(db, 'users', user.uid);
-      const todayStr = getLocalDateString(new Date());
+      const todayStr = gameDate;
 
       let newStreak = stats.currentStreak;
       let newMaxStreak = stats.maxStreak;
@@ -120,6 +162,16 @@ export const useFirebaseStats = () => {
         newMaxStreak = Math.max(newStreak, stats.maxStreak);
       }
 
+      // Calculate updated score distribution
+      const currentDist = stats.scoreDistribution || {
+        0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+      };
+      const newScoreCount = (currentDist[score] || 0) + 1;
+      const updatedDist = {
+        ...currentDist,
+        [score]: newScoreCount
+      };
+
       const updatedStatsData = {
         allTimeScore: stats.allTimeScore + score,
         gamesPlayed: stats.gamesPlayed + 1,
@@ -127,27 +179,63 @@ export const useFirebaseStats = () => {
         maxStreak: newMaxStreak,
         lastPlayedDate: todayStr,
         lastActive: serverTimestamp(),
+        scoreDistribution: updatedDist
       };
 
-      // Update Firestore
-      await updateDoc(userDocRef, updatedStatsData);
-
-      // Save detailed score in a subcollection for history reference
+      // 1. Save detailed score in a subcollection for history reference
       const scoreDocRef = doc(db, 'users', user.uid, 'history', todayStr);
       await setDoc(scoreDocRef, {
         date: todayStr,
         score,
+        guesses,
+        userSwipes,
         timestamp: serverTimestamp()
       });
 
-      // Update local state
+      // 2. Perform transaction to update global correctness on daily_games/{date}
+      const dailyGameRef = doc(db, 'daily_games', todayStr);
+      let updatedItemsList = [...currentItems];
+
+      try {
+        await runTransaction(db, async (transaction) => {
+          const dailyGameSnap = await transaction.get(dailyGameRef);
+          if (!dailyGameSnap.exists()) {
+            throw new Error("Daily game doc does not exist");
+          }
+          const dailyGameData = dailyGameSnap.data();
+          const itemsList = dailyGameData.items || [];
+          
+          updatedItemsList = itemsList.map((item: any, idx: number) => {
+            const isCorrect = guesses[idx] === true;
+            const prevCorrect = item.correctCount || 0;
+            const prevTotal = item.totalCount || 0;
+            return {
+              ...item,
+              correctCount: isCorrect ? prevCorrect + 1 : prevCorrect,
+              totalCount: prevTotal + 1
+            };
+          });
+
+          transaction.update(dailyGameRef, { items: updatedItemsList });
+        });
+      } catch (transError) {
+        console.error('Transaction failed to update global stats:', transError);
+      }
+
+      // 3. Update User Stats document
+      await updateDoc(userDocRef, updatedStatsData);
+
+      // 4. Update local state
       setStats((prev) => prev ? {
         ...prev,
         ...updatedStatsData
       } : null);
 
+      return updatedItemsList;
+
     } catch (error) {
       console.error('Error saving game result to Firebase:', error);
+      return null;
     }
   };
 
@@ -155,6 +243,7 @@ export const useFirebaseStats = () => {
     user,
     stats,
     loading,
-    saveGameResult
+    saveGameResult,
+    fetchTodayHistory
   };
 };
