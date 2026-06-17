@@ -2,12 +2,12 @@
 /**
  * Freejiji Weekly Content Generator
  * ===================================
- * Uses plain HTTP fetch (not headless Chrome) to get Kijiji's server-side rendered HTML,
- * then extracts structured listing data from the embedded __NEXT_DATA__ JSON.
+ * Fetches listings from Kijiji's public search pages (SSR HTML)
+ * and extracts the listings from the embedded __NEXT_DATA__ JSON.
  *
  * Usage:
  *   node generate-week.js            # Full run — writes to Firestore
- *   node generate-week.js --dry-run  # Test run — prints results, no Firestore writes
+ *   node generate-week.js --dry-run  # Test run — no Firestore writes
  *
  * Requirements:
  *   1. npm install  (in this scripts/ directory)
@@ -16,7 +16,6 @@
 
 'use strict';
 
-const { load } = require('cheerio');
 const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
@@ -29,14 +28,14 @@ const ITEMS_PER_DAY = 10;
 const DAYS_TO_GENERATE = 7;
 const POOL_TARGET_PER_TYPE = 80;
 
+// Kijiji category IDs
+const CATEGORY_FREE_STUFF = 17220001;
+const CATEGORY_BUY_SELL = 10;
+
+// Category IDs to exclude from paid results (tickets=104, garage sales=272, free stuff=17220001)
+const EXCLUDED_PAID_CATEGORY_IDS = new Set([104, 272, 17220001]);
+
 const BANNED_KEYWORDS = ['pickup', 'pick up', 'pick-up', 'scrap', 'service', 'services'];
-const EXCLUDED_PAID_URL_FRAGMENTS = ['/b-tickets', '/v-tickets', 'garage-sale', 'yard-sale', 'free-stuff', 'c17410'];
-
-// Kijiji browse URLs (no sort param — browse pages default to newest)
-const FREE_URL  = 'https://www.kijiji.ca/b-free-stuff/canada/c17410l0';
-const PAID_URL  = 'https://www.kijiji.ca/b-buy-sell/canada/c10l0';
-
-// ─── Request headers ───────────────────────────────────────────────────────────
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -53,86 +52,175 @@ const HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
-// ─── Fetch helper ──────────────────────────────────────────────────────────────
+// ─── Image proxy (wsrv.nl) ────────────────────────────────────────────────────
 
-async function fetchPage(url) {
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
-  return res.text();
-}
-
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// ─── Next.js data extraction ───────────────────────────────────────────────────
-
-/**
- * Pulls the __NEXT_DATA__ JSON from Kijiji's SSR'd HTML.
- * Kijiji is a Next.js app — every page includes this script tag with all page data.
- */
-function extractNextData(html) {
-  const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-  if (!match) return null;
-  try {
-    return JSON.parse(match[1]);
-  } catch (e) {
-    return null;
-  }
-}
-
-/**
- * Navigates the pageProps object to find the listings array.
- * Kijiji's structure has changed over time; we try multiple paths.
- */
-function findListingsArray(pageProps) {
-  if (!pageProps) return [];
-
-  const candidates = [
-    pageProps.listings,
-    pageProps.ads,
-    pageProps.searchResults,
-    pageProps.searchResults?.results,
-    pageProps.listingResponse?.listings,
-    pageProps.pageData?.ads,
-    pageProps.srp?.listings,
-    pageProps.initialState?.srp?.listings,
-  ];
-
-  for (const c of candidates) {
-    if (Array.isArray(c) && c.length > 0) return c;
-  }
-
-  // Debug: log available keys so we can update paths if needed
-  console.log('  [debug] pageProps keys:', Object.keys(pageProps));
-  return [];
-}
-
-// ─── Image proxy ───────────────────────────────────────────────────────────────
-
-/**
- * Routes an image through wsrv.nl (open-source image proxy) to bypass
- * Kijiji's hotlink protection without re-hosting copyrighted images.
- */
 function proxyImageUrl(originalUrl) {
   if (!originalUrl) return null;
-  // Upgrade thumbnail to larger size (Kijiji uses eBay CDN)
-  const bigUrl = originalUrl
-    .replace(/\/s-l\d+(\.\w+)$/, '/s-l1200$1')
-    .split('?')[0];
-  return `https://wsrv.nl/?url=${encodeURIComponent(bigUrl)}&w=800&h=600&fit=cover&output=webp&q=80`;
+  let cleanUrl = originalUrl;
+  if (cleanUrl.includes('media.kijiji.ca')) {
+    cleanUrl = cleanUrl.split('?')[0];
+  } else {
+    cleanUrl = cleanUrl.replace(/\/s-l\d+(\.\w+)$/, '/s-l1200$1').split('?')[0];
+  }
+  return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&w=800&h=600&fit=cover&output=webp&q=80`;
 }
 
-// ─── Date helpers ──────────────────────────────────────────────────────────────
+// ─── Filtering ─────────────────────────────────────────────────────────────────
 
-function isWithinTwoWeeks(dateVal) {
-  if (!dateVal) return false;
-  const d = new Date(dateVal);
+function isWithinTwoWeeks(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
   if (isNaN(d)) return false;
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 14);
   return d >= cutoff;
 }
+
+// Check for banned keywords
+function hasBannedKeyword(title = '', description = '') {
+  const combined = `${title} ${description}`.toLowerCase();
+  return BANNED_KEYWORDS.some(kw => combined.includes(kw));
+}
+
+// ─── Scrape a pool of items ────────────────────────────────────────────────────
+
+async function fetchSearchPage(baseUrl, page) {
+  let url;
+  if (page > 1) {
+    const parts = baseUrl.split('/c');
+    const categoryPart = 'c' + parts.pop();
+    const prefix = parts.join('/c');
+    url = `${prefix}/page-${page}/${categoryPart}?sort=dateDesc`;
+  } else {
+    url = `${baseUrl}?sort=dateDesc`;
+  }
+  console.log(`  📡 GET ${url}`);
+
+  const res = await fetch(url, { headers: HEADERS });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} — ${res.statusText}`);
+  }
+
+  const html = await res.text();
+  const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!match) {
+    // Save debug page
+    fs.writeFileSync(path.join(__dirname, `debug-page-error.html`), html);
+    throw new Error('No __NEXT_DATA__ script block found in HTML (saved debug-page-error.html)');
+  }
+
+  const nextData = JSON.parse(match[1]);
+  const pageProps = nextData.props?.pageProps;
+  if (!pageProps) {
+    throw new Error('No pageProps found in __NEXT_DATA__');
+  }
+
+  return pageProps.__APOLLO_STATE__ || {};
+}
+
+function parseListing(raw, type) {
+  const id = raw.id || '';
+  const title = (raw.title || '').trim();
+  const description = (raw.description || '').trim();
+
+  // Price
+  const priceObj = raw.price || {};
+  const priceAmount = (priceObj.amount || 0) / 100;
+  const isFree = type === 'free' || !raw.price || priceAmount === 0;
+  const actualPrice = isFree ? 0 : priceAmount;
+
+  // Image
+  const images = raw.imageUrls || [];
+  const image = proxyImageUrl(images[0]);
+
+  // URL
+  const listingUrl = raw.url || '';
+
+  // Location
+  const location = raw.location?.name || 'Canada';
+
+  // Date
+  const dateStr = raw.activationDate || raw.sortingDate || '';
+
+  // Promotion/Source info
+  const adSource = raw.adSource || 'ORGANIC';
+
+  // Category ID
+  const categoryId = raw.categoryId || 0;
+
+  return { id, title, description, image, actualPrice, isFree, listingUrl, location, dateStr, adSource, categoryId };
+}
+
+async function scrapePool(baseUrl, type, targetCount) {
+  const items = [];
+  const seenIds = new Set();
+  let page = 1;
+
+  while (items.length < targetCount && page <= 15) {
+    let apollo;
+    try {
+      apollo = await fetchSearchPage(baseUrl, page);
+    } catch (err) {
+      console.error(`  ❌ Error fetching page ${page}: ${err.message}`);
+      break;
+    }
+
+    // Extract all StandardListing objects from Apollo cache
+    const rawListings = Object.values(apollo).filter(v => v.__typename === 'StandardListing');
+    console.log(`  Found ${rawListings.length} raw listings on page ${page}`);
+
+    if (rawListings.length === 0) {
+      // Save debug file
+      const debugPath = path.join(__dirname, `debug-apollo-${type}-p${page}.json`);
+      fs.writeFileSync(debugPath, JSON.stringify(apollo, null, 2));
+      console.warn(`  ⚠️  No StandardListings found in Apollo cache. Saved response → ${debugPath}`);
+      break;
+    }
+
+    for (const raw of rawListings) {
+      const listing = parseListing(raw, type);
+
+      // Dedup
+      if (seenIds.has(listing.id)) continue;
+
+      // Validate basic fields
+      if (!listing.id || !listing.title || listing.title.length < 5) continue;
+      if (!listing.image) continue;
+      if (!listing.listingUrl.includes('kijiji.ca')) continue;
+
+      // Exclude promoted/sponsored ads if adSource is not ORGANIC
+      if (listing.adSource !== 'ORGANIC') continue;
+
+      // Date check (last 1-2 weeks)
+      if (!isWithinTwoWeeks(listing.dateStr)) continue;
+
+      // Banned keywords check
+      if (hasBannedKeyword(listing.title, listing.description)) continue;
+
+      // Category exclusions for paid items
+      if (type === 'paid') {
+        if (EXCLUDED_PAID_CATEGORY_IDS.has(listing.categoryId)) continue;
+        if (listing.actualPrice <= 0) continue; // paid items must have positive price
+      }
+
+      seenIds.add(listing.id);
+      
+      // Remove internal fields before adding to pool
+      const { dateStr, adSource, categoryId, ...cleanListing } = listing;
+      items.push(cleanListing);
+    }
+
+    console.log(`  Pool so far: ${items.length} valid items`);
+    if (items.length >= targetCount) break;
+
+    page++;
+    await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000)); // Polite delay
+  }
+
+  return items;
+}
+
+// ─── Date helpers ──────────────────────────────────────────────────────────────
 
 function getTorontoDateString(daysFromNow = 0) {
   const d = new Date();
@@ -143,146 +231,13 @@ function getTorontoDateString(daysFromNow = 0) {
   }).format(d);
 }
 
-// ─── Filtering ─────────────────────────────────────────────────────────────────
-
-function hasBannedKeyword(title = '', description = '') {
-  const combined = `${title} ${description}`.toLowerCase();
-  return BANNED_KEYWORDS.some((kw) => combined.includes(kw));
-}
-
-function isExcludedPaidUrl(url = '') {
-  return EXCLUDED_PAID_URL_FRAGMENTS.some((f) => url.toLowerCase().includes(f));
-}
-
-// ─── Parse a single raw listing from __NEXT_DATA__ ────────────────────────────
-
-function parseListing(raw, type) {
-  // ID
-  const id = String(raw.id || raw.adId || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-
-  // Text
-  const title = (raw.title || '').trim();
-  const description = (raw.description || raw.shortDescription || '').trim();
-
-  // Price
-  const priceObj = raw.price || {};
-  const priceType = (priceObj.type || priceObj.priceType || '').toUpperCase();
-  const priceAmount = parseFloat(priceObj.amount ?? priceObj.value ?? 0) || 0;
-  const isFree = type === 'free' || priceType === 'FREE' || priceAmount === 0;
-  const actualPrice = isFree ? 0 : priceAmount;
-
-  // Image — first image from the images array
-  const images = raw.images || raw.imageUrls || [];
-  const firstImg = Array.isArray(images) ? images[0] : null;
-  const imgUri = (typeof firstImg === 'string' ? firstImg : firstImg?.uri || firstImg?.url || '');
-  const image = proxyImageUrl(imgUri);
-
-  // URL
-  const seoUrl = raw.seoUrl || raw.url || raw.adUrl || '';
-  const listingUrl = seoUrl.startsWith('http') ? seoUrl : `https://www.kijiji.ca${seoUrl}`;
-
-  // Location
-  const addr = raw.adAddress || raw.location || {};
-  const location = [addr.city, addr.province].filter(Boolean).join(', ') || 'Canada';
-
-  // Date
-  const dateStr = raw.activationDate || raw.postingDate || raw.sortingDate || raw.postedDate || '';
-
-  return { id, title, description, image, actualPrice, isFree, listingUrl, location, dateStr };
-}
-
-// ─── Scrape one page ───────────────────────────────────────────────────────────
-
-async function scrapePage(baseUrl, pageNum, type) {
-  const url = pageNum > 1 ? `${baseUrl}?page=${pageNum}` : baseUrl;
-  console.log(`  📄 Page ${pageNum}: ${url}`);
-
-  const html = await fetchPage(url);
-  const nextData = extractNextData(html);
-
-  if (!nextData) {
-    // Save debug file so we can inspect
-    const debugPath = path.join(__dirname, `debug-page-${type}-p${pageNum}.html`);
-    fs.writeFileSync(debugPath, html);
-    console.warn(`  ⚠️  No __NEXT_DATA__ found. Saved HTML → ${debugPath}`);
-    console.warn('     This usually means Kijiji returned an error or CAPTCHA page.');
-    return { items: [], hasNext: false };
-  }
-
-  const pp = nextData?.props?.pageProps;
-  const rawListings = findListingsArray(pp);
-  console.log(`  Found ${rawListings.length} raw listings in __NEXT_DATA__`);
-
-  if (rawListings.length === 0) {
-    // Log the full pageProps structure for debugging
-    const debugPath = path.join(__dirname, `debug-nextdata-${type}-p${pageNum}.json`);
-    fs.writeFileSync(debugPath, JSON.stringify(pp, null, 2));
-    console.warn(`  ⚠️  Listings array empty. Saved pageProps → ${debugPath}`);
-  }
-
-  // Detect pagination
-  const pagination = pp?.pagination || pp?.searchResults?.pagination || {};
-  const currentPage = pagination.currentPage || pagination.current || pageNum;
-  const totalPages = pagination.totalPages || pagination.total || 1;
-  const hasNext = currentPage < totalPages;
-
-  return { rawListings, hasNext };
-}
-
-// ─── Scrape full pool ──────────────────────────────────────────────────────────
-
-async function scrapePool(baseUrl, type, targetCount) {
-  const items = [];
-  const seenIds = new Set();
-  let page = 1;
-
-  while (items.length < targetCount && page <= 10) {
-    let rawListings, hasNext;
-
-    try {
-      ({ rawListings = [], hasNext = false } = await scrapePage(baseUrl, page, type));
-    } catch (err) {
-      console.error(`  ❌ Error fetching page ${page}: ${err.message}`);
-      break;
-    }
-
-    for (const raw of rawListings) {
-      const listing = parseListing(raw, type);
-
-      // Dedup
-      if (seenIds.has(listing.id)) continue;
-
-      // Validate
-      if (!listing.title || listing.title.length < 5) continue;
-      if (!listing.image) continue;
-      if (!listing.listingUrl.includes('kijiji.ca')) continue;
-      if (!isWithinTwoWeeks(listing.dateStr)) continue;
-      if (hasBannedKeyword(listing.title, listing.description)) continue;
-      if (type === 'paid' && isExcludedPaidUrl(listing.listingUrl)) continue;
-
-      seenIds.add(listing.id);
-      items.push(listing);
-    }
-
-    console.log(`  Pool so far: ${items.length} valid items`);
-
-    if (!hasNext) break;
-    page++;
-
-    // Polite delay between pages
-    await sleep(1000 + Math.random() * 1500);
-  }
-
-  return items;
-}
-
 // ─── Firebase Admin ────────────────────────────────────────────────────────────
 
 function initFirebase() {
   const svcPath = path.join(__dirname, 'service-account.json');
   if (!fs.existsSync(svcPath)) {
-    console.error('\n❌ Missing service-account.json\n');
-    console.error('  Download from: https://console.firebase.google.com/project/freejiji-4e401/settings/serviceaccounts/adminsdk');
+    console.error('\n❌ Missing service-account.json');
+    console.error('  Download: https://console.firebase.google.com/project/freejiji-4e401/settings/serviceaccounts/adminsdk');
     process.exit(1);
   }
   admin.initializeApp({
@@ -295,7 +250,7 @@ function initFirebase() {
 // ─── Day building ──────────────────────────────────────────────────────────────
 
 function pickRandom(pool, usedIds) {
-  const available = pool.filter((i) => !usedIds.has(i.id));
+  const available = pool.filter(i => !usedIds.has(i.id));
   return available.length > 0 ? available[Math.floor(Math.random() * available.length)] : null;
 }
 
@@ -303,8 +258,8 @@ function pickRandom(pool, usedIds) {
 
 async function main() {
   console.log('\n🎮  Freejiji Weekly Content Generator');
-  console.log(`📅  Generating ${DAYS_TO_GENERATE} days (Toronto time)`);
-  if (DRY_RUN) console.log('🧪  DRY RUN — nothing will be written to Firestore\n');
+  console.log(`📅  Generating ${DAYS_TO_GENERATE} days starting tomorrow (Toronto time)`);
+  if (DRY_RUN) console.log('🧪  DRY RUN — nothing written to Firestore\n');
 
   let db;
   if (!DRY_RUN) {
@@ -312,23 +267,20 @@ async function main() {
     console.log('✅  Firebase connected\n');
   }
 
-  // ── Scrape pools ──
-  console.log('🆓  Scraping FREE items (Kijiji Free Stuff, Canada-wide)...');
+  // ── Scrape FREE pool ──
+  console.log('🆓  Scraping FREE items (Kijiji Free Stuff, Canada)...');
+  const FREE_URL = 'https://www.kijiji.ca/b-free-stuff/canada/c17220001l0';
   const freePool = await scrapePool(FREE_URL, 'free', POOL_TARGET_PER_TYPE);
   console.log(`✅  Free pool: ${freePool.length} items\n`);
 
-  console.log('💰  Scraping PAID items (Kijiji Buy & Sell, Canada-wide)...');
+  // ── Scrape PAID pool ──
+  console.log('💰  Scraping PAID items (Kijiji Buy & Sell, Canada)...');
+  const PAID_URL = 'https://www.kijiji.ca/b-buy-sell/canada/c10l0';
   const paidPool = await scrapePool(PAID_URL, 'paid', POOL_TARGET_PER_TYPE);
   console.log(`✅  Paid pool: ${paidPool.length} items\n`);
 
-  if (freePool.length < 10) {
-    console.error('❌  Too few free items scraped. Check the debug files.');
-    process.exit(1);
-  }
-  if (paidPool.length < 10) {
-    console.error('❌  Too few paid items scraped. Check the debug files.');
-    process.exit(1);
-  }
+  if (freePool.length < 10) { console.error('❌  Too few free items. Check debug files.'); process.exit(1); }
+  if (paidPool.length < 10) { console.error('❌  Too few paid items. Check debug files.'); process.exit(1); }
 
   // ── Build 7 days ──
   const usedFreeIds = new Set();
@@ -344,29 +296,23 @@ async function main() {
     for (let slot = 0; slot < ITEMS_PER_DAY; slot++) {
       const wantFree = Math.random() < 0.5;
       let item = pickRandom(wantFree ? freePool : paidPool, wantFree ? usedFreeIds : usedPaidIds);
-
-      // Fallback to other type if pool is exhausted
-      if (!item) {
-        item = pickRandom(!wantFree ? freePool : paidPool, !wantFree ? usedFreeIds : usedPaidIds);
-      }
+      if (!item) item = pickRandom(!wantFree ? freePool : paidPool, !wantFree ? usedFreeIds : usedPaidIds);
       if (!item) continue;
 
       (item.isFree ? usedFreeIds : usedPaidIds).add(item.id);
-      const { dateStr: _ds, ...cleanItem } = item; // Remove internal dateStr field
-      dayItems.push({ ...cleanItem, id: `${dateStr}-slot${slot + 1}` });
+      dayItems.push({ ...item, id: `${dateStr}-slot${slot + 1}` });
     }
 
-    const freeCount = dayItems.filter((i) => i.isFree).length;
-    const paidCount = dayItems.filter((i) => !i.isFree).length;
+    const freeCount = dayItems.filter(i => i.isFree).length;
+    const paidCount = dayItems.filter(i => !i.isFree).length;
     console.log(`  ${dateStr}: ${dayItems.length} items (${freeCount} free / ${paidCount} paid)`);
     generatedDays.push({ date: dateStr, items: dayItems });
   }
 
-  const unusedFree = freePool.filter((i) => !usedFreeIds.has(i.id));
-  const unusedPaid = paidPool.filter((i) => !usedPaidIds.has(i.id));
-  console.log(`\n  Swap pool: ${unusedFree.length} free + ${unusedPaid.length} paid available`);
+  const unusedFree = freePool.filter(i => !usedFreeIds.has(i.id));
+  const unusedPaid = paidPool.filter(i => !usedPaidIds.has(i.id));
+  console.log(`\n  Swap pool: ${unusedFree.length} free + ${unusedPaid.length} paid remaining`);
 
-  // ── Dry run output ──
   if (DRY_RUN) {
     console.log('\n🧪  DRY RUN — sample day 1:');
     console.log(JSON.stringify(generatedDays[0], null, 2));
@@ -397,10 +343,10 @@ async function main() {
 
   console.log(`\n✅  ${generatedDays.length} days written to Firestore as "draft"`);
   console.log('✅  Swap pool saved');
-  console.log('\n🎨  Open scripts/preview-tool.html in your browser to review and approve!\n');
+  console.log('\n🎨  Open scripts/preview-tool.html to review and approve!\n');
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error('\n💥  Fatal error:', err);
   process.exit(1);
 });

@@ -199,7 +199,7 @@ export const GameOver: React.FC<GameOverProps> = ({
                     href={item.listingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`View ${item.title} listing on Kijiji`}
+                    aria-label={`View ${item.title} original listing`}
                     className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                   >
                     <ExternalLink className="w-4 h-4" />
