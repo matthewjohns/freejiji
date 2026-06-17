@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Freejiji — Content Preview Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0b090f;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .header {
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+    }
+    .header h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00ff87, #00d2ff, #8e2de2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header .subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    .auth-panel {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-status { width: 8px; height: 8px; border-radius: 50%; background: #ff007f; flex-shrink: 0; }
+    .auth-status.connected { background: #00ff87; }
+    .auth-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+
+    .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Week calendar ── */
+    .week-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .week-tab {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      position: relative;
+    }
+    .week-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .week-tab.active { background: rgba(142,45,226,0.2); border-color: rgba(142,45,226,0.5); color: #fff; }
+    .week-tab .status-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: rgba(255,255,255,0.2);
+      vertical-align: middle;
+    }
+    .week-tab .status-dot.draft { background: #f59e0b; }
+    .week-tab .status-dot.ready { background: #00ff87; }
+
+    /* ── Day panel ── */
+    .day-panel { display: none; }
+    .day-panel.active { display: block; }
+
+    .day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .day-title { font-size: 1.1rem; font-weight: 700; color: rgba(255,255,255,0.9); }
+    .day-meta { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    .approve-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #00ff87, #00d2ff);
+      color: #0b090f;
+      font-weight: 800;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .approve-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,255,135,0.3); }
+    .approve-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .approve-btn.approved { background: rgba(0,255,135,0.15); border: 1px solid rgba(0,255,135,0.3); color: #00ff87; }
+
+    /* ── Item grid ── */
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .item-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+      position: relative;
+    }
+    .item-card:hover { border-color: rgba(255,255,255,0.15); }
+
+    .item-img-wrap {
+      width: 100%;
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      background: #15131b;
+      position: relative;
+    }
+    .item-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .item-img-wrap img:hover { transform: scale(1.03); }
+    .item-img-wrap .img-placeholder {
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: rgba(255,255,255,0.1);
+    }
+
+    .price-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .price-badge.free { background: rgba(0,255,135,0.9); color: #0b090f; }
+    .price-badge.paid { background: rgba(255,0,127,0.9); color: #fff; }
+
+    .item-body { padding: 12px; }
+    .item-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+    }
+    .item-desc {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .item-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .item-location {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.35);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      border-radius: 7px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-swap {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-swap:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .btn-swap:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-link {
+      background: rgba(0,210,255,0.1);
+      color: #00d2ff;
+      border: 1px solid rgba(0,210,255,0.2);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-link:hover { background: rgba(0,210,255,0.2); }
+
+    /* ── State messages ── */
+    .state-msg {
+      text-align: center;
+      padding: 60px 24px;
+      color: rgba(255,255,255,0.4);
+    }
+    .state-msg .icon { font-size: 3rem; margin-bottom: 12px; }
+    .state-msg h3 { font-size: 1rem; margin-bottom: 6px; color: rgba(255,255,255,0.7); }
+    .state-msg p { font-size: 0.85rem; max-width: 360px; margin: 0 auto; line-height: 1.5; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 200;
+      animation: slideIn 0.2s ease;
+      pointer-events: none;
+    }
+    .toast.success { background: rgba(0,255,135,0.15); border: 1px solid rgba(0,255,135,0.3); color: #00ff87; }
+    .toast.error { background: rgba(255,0,127,0.15); border: 1px solid rgba(255,0,127,0.3); color: #ff007f; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: #00ff87;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🛒 Freejiji — Content Preview</h1>
+    <div class="subtitle">Review and approve upcoming daily game content</div>
+  </div>
+  <div class="auth-panel">
+    <div class="auth-status" id="authDot"></div>
+    <span class="auth-label" id="authLabel">Connecting...</span>
+  </div>
+</div>
+
+<div class="main">
+  <div id="loading" class="state-msg">
+    <div class="icon"><span class="spinner"></span></div>
+    <h3>Loading...</h3>
+    <p>Connecting to Firebase and fetching this week's draft content.</p>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="week-tabs" id="weekTabs"></div>
+    <div id="dayPanels"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<!-- Firebase SDK (CDN) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import {
+    getAuth,
+    signInAnonymously,
+    onAuthStateChanged,
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    updateDoc,
+    collection,
+    getDocs,
+    query,
+    orderBy,
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  // ── Firebase config (same as the game app) ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyAze8F6aqDwLfR2tAiCm3a6HQ5TLXLCvNc",
+    authDomain: "freejiji-4e401.firebaseapp.com",
+    projectId: "freejiji-4e401",
+    storageBucket: "freejiji-4e401.firebasestorage.app",
+    messagingSenderId: "250289247797",
+    appId: "1:250289247797:web:e38580db8626963544837c",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // ── State ──
+  let weekData = {}; // date → { date, items, status }
+  let poolData = { freeItems: [], paidItems: [] };
+
+  // ── UI helpers ──
+  function showToast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast ${type}`;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00'); // Noon to avoid timezone shifts
+    return d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  // ── Build UI ──
+  function buildUI() {
+    const dates = Object.keys(weekData).sort();
+    if (dates.length === 0) {
+      document.getElementById('loading').innerHTML = `
+        <div class="state-msg">
+          <div class="icon">📭</div>
+          <h3>No draft content found</h3>
+          <p>Run <code>node scripts/generate-week.js</code> first to generate this week's content, then refresh this page.</p>
+        </div>`;
+      return;
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    const tabsEl = document.getElementById('weekTabs');
+    const panelsEl = document.getElementById('dayPanels');
+    tabsEl.innerHTML = '';
+    panelsEl.innerHTML = '';
+
+    dates.forEach((date, idx) => {
+      const day = weekData[date];
+
+      // Tab
+      const tab = document.createElement('button');
+      tab.className = `week-tab${idx === 0 ? ' active' : ''}`;
+      tab.dataset.date = date;
+      tab.innerHTML = `<span class="status-dot ${day.status}"></span>${formatDate(date)}`;
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`panel-${date}`).classList.add('active');
+      });
+      tabsEl.appendChild(tab);
+
+      // Panel
+      const panel = document.createElement('div');
+      panel.className = `day-panel${idx === 0 ? ' active' : ''}`;
+      panel.id = `panel-${date}`;
+      panel.innerHTML = renderDayPanel(day);
+      panelsEl.appendChild(panel);
+    });
+
+    attachEventListeners();
+  }
+
+  function renderDayPanel(day) {
+    const freeCount = day.items.filter(i => i.isFree).length;
+    const paidCount = day.items.filter(i => !i.isFree).length;
+    const isApproved = day.status === 'ready';
+
+    return `
+      <div class="day-header">
+        <div>
+          <div class="day-title">${formatDate(day.date)}</div>
+          <div class="day-meta">${day.items.length} items · ${freeCount} free · ${paidCount} paid · Status: <strong>${day.status}</strong></div>
+        </div>
+        <button
+          class="approve-btn${isApproved ? ' approved' : ''}"
+          data-action="approve"
+          data-date="${day.date}"
+          ${isApproved ? 'disabled' : ''}
+        >${isApproved ? '✅ Approved' : '✅ Approve Day'}</button>
+      </div>
+      <div class="items-grid">
+        ${day.items.map((item, idx) => renderItemCard(item, day.date, idx)).join('')}
+      </div>`;
+  }
+
+  function renderItemCard(item, date, idx) {
+    const priceLabel = item.isFree ? 'FREE' : `$${item.actualPrice.toFixed(0)}`;
+    const priceCls = item.isFree ? 'free' : 'paid';
+    return `
+      <div class="item-card" data-date="${date}" data-idx="${idx}">
+        <div class="item-img-wrap">
+          <img
+            src="${item.image}"
+            alt="${escapeHtml(item.title)}"
+            loading="lazy"
+            onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'>🖼️</div>'"
+          />
+          <span class="price-badge ${priceCls}">${priceLabel}</span>
+        </div>
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          <div class="item-desc">${escapeHtml(item.description || '')}</div>
+          <div class="item-meta">
+            <span class="item-location">📍 ${escapeHtml(item.location || 'Canada')}</span>
+            <div class="item-actions">
+              <button class="btn-sm btn-swap" data-action="swap" data-date="${date}" data-idx="${idx}">🔄 Swap</button>
+              <a href="${item.listingUrl}" target="_blank" rel="noopener" class="btn-sm btn-link">View ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function refreshDayPanel(date) {
+    const day = weekData[date];
+    const panel = document.getElementById(`panel-${date}`);
+    if (panel) panel.innerHTML = renderDayPanel(day);
+
+    // Update tab status dot
+    const tab = document.querySelector(`.week-tab[data-date="${date}"]`);
+    if (tab) {
+      tab.querySelector('.status-dot').className = `status-dot ${day.status}`;
+    }
+
+    attachEventListeners();
+  }
+
+  function attachEventListeners() {
+    // Swap buttons
+    document.querySelectorAll('[data-action="swap"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const date = btn.dataset.date;
+        const idx = parseInt(btn.dataset.idx);
+        await swapItem(date, idx);
+      });
+    });
+
+    // Approve buttons
+    document.querySelectorAll('[data-action="approve"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const date = btn.dataset.date;
+        await approveDay(date);
+      });
+    });
+  }
+
+  // ── Swap an item ──
+  async function swapItem(date, idx) {
+    const day = weekData[date];
+    const currentItem = day.items[idx];
+    const wantFree = currentItem.isFree;
+
+    const pool = wantFree ? poolData.freeItems : poolData.paidItems;
+    const usedIds = new Set(day.items.map(i => i.id));
+    const available = pool.filter(i => !usedIds.has(i.id));
+
+    if (available.length === 0) {
+      showToast('No more items in the swap pool for this type.', 'error');
+      return;
+    }
+
+    const replacement = available[Math.floor(Math.random() * available.length)];
+    day.items[idx] = { ...replacement, id: `${date}-slot${idx + 1}` };
+
+    // Persist to Firestore
+    try {
+      await updateDoc(doc(db, 'daily_games', date), { items: day.items });
+      showToast('Item swapped!');
+      refreshDayPanel(date);
+    } catch (err) {
+      console.error('Swap failed:', err);
+      showToast('Swap failed — check console', 'error');
+    }
+  }
+
+  // ── Approve a day ──
+  async function approveDay(date) {
+    try {
+      await updateDoc(doc(db, 'daily_games', date), { status: 'ready' });
+      weekData[date].status = 'ready';
+      showToast(`${formatDate(date)} approved! 🎉`);
+      refreshDayPanel(date);
+    } catch (err) {
+      console.error('Approve failed:', err);
+      showToast('Approve failed — check console', 'error');
+    }
+  }
+
+  // ── Load data from Firestore ──
+  async function loadWeekData() {
+    try {
+      // Load this week's draft days (next 7 days)
+      const today = new Date();
+      const dates = [];
+      for (let d = 1; d <= 7; d++) {
+        const dt = new Date(today);
+        dt.setDate(dt.getDate() + d);
+        dates.push(new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Toronto',
+          year: 'numeric', month: '2-digit', day: '2-digit'
+        }).format(dt));
+      }
+
+      weekData = {};
+      await Promise.all(dates.map(async (date) => {
+        const snap = await getDoc(doc(db, 'daily_games', date));
+        if (snap.exists()) weekData[date] = snap.data();
+      }));
+
+      // Load swap pool
+      const poolSnap = await getDoc(doc(db, 'item_pool', 'latest'));
+      if (poolSnap.exists()) poolData = poolSnap.data();
+
+      buildUI();
+
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      document.getElementById('loading').innerHTML = `
+        <div class="state-msg">
+          <div class="icon">⚠️</div>
+          <h3>Failed to load data</h3>
+          <p>${err.message}</p>
+        </div>`;
+    }
+  }
+
+  // ── Auth ──
+  onAuthStateChanged(auth, async (user) => {
+    const dot = document.getElementById('authDot');
+    const label = document.getElementById('authLabel');
+    if (user) {
+      dot.classList.add('connected');
+      label.textContent = `Connected (${user.uid.slice(0,8)}...)`;
+      await loadWeekData();
+    } else {
+      dot.classList.remove('connected');
+      label.textContent = 'Signing in...';
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        label.textContent = 'Auth failed';
+        console.error(err);
+      }
+    }
+  });
+</script>
+</body>
+</html>

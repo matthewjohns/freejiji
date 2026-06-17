@@ -600,6 +600,13 @@ body {
   50% { opacity: 0.5; }
 }
 
+/* Spin animation (for loading spinner) */
+.animate-spin { animation: spin 0.7s linear infinite; }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Medal & Score Colors */
 .text-gold { color: #fbbf24; }
 .text-silver { color: #cbd5e1; }

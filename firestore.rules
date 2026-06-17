@@ -1,12 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // User stats and play history — private to each user
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
+
       match /history/{date} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    // Daily game content — readable by all signed-in users (needed by the game)
+    // Writable by any authenticated user (preview tool uses the same anon auth)
+    match /daily_games/{date} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Swap pool for the preview tool
+    match /item_pool/{doc} {
+      allow read, write: if request.auth != null;
     }
   }
 }
