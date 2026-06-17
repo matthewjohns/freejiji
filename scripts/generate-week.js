@@ -58,7 +58,8 @@ function proxyImageUrl(originalUrl) {
   if (!originalUrl) return null;
   let cleanUrl = originalUrl;
   if (cleanUrl.includes('media.kijiji.ca')) {
-    cleanUrl = cleanUrl.split('?')[0];
+    const baseUrl = cleanUrl.split('?')[0];
+    cleanUrl = `${baseUrl}?rule=kijijica-640-webp`;
   } else {
     cleanUrl = cleanUrl.replace(/\/s-l\d+(\.\w+)$/, '/s-l1200$1').split('?')[0];
   }
