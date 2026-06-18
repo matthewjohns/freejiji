@@ -37,6 +37,7 @@ function App() {
     guesses: (boolean | null)[];
     userSwipes: boolean[];
   } | null>(null);
+  const [hasInProgressGame, setHasInProgressGame] = useState(false);
 
   const cardStackRef = useRef<CardStackRef>(null);
 
@@ -58,6 +59,9 @@ function App() {
       if (historyData) {
         setHasPlayedToday(true);
         setCompletedGameData(historyData);
+        // Clean up progress since game is already complete
+        localStorage.removeItem(`freejiji_progress_${gameDate}`);
+        setHasInProgressGame(false);
       } else {
         setHasPlayedToday(false);
         setCompletedGameData(null);
@@ -69,15 +73,47 @@ function App() {
     };
   }, [user, gameDate, fetchTodayHistory]);
 
+  // Check for in-progress game progress on mount/gameDate change
+  useEffect(() => {
+    if (!gameDate || items.length === 0) return;
+
+    const progressKey = `freejiji_progress_${gameDate}`;
+    const saved = localStorage.getItem(progressKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (
+          typeof parsed.currentIndex === 'number' &&
+          parsed.currentIndex < items.length &&
+          Array.isArray(parsed.guesses) &&
+          Array.isArray(parsed.userSwipes) &&
+          typeof parsed.score === 'number'
+        ) {
+          setCurrentIndex(parsed.currentIndex);
+          setGuesses(parsed.guesses);
+          setUserSwipes(parsed.userSwipes);
+          setScore(parsed.score);
+          setHasInProgressGame(true);
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing saved progress:', e);
+      }
+    }
+    setHasInProgressGame(false);
+  }, [gameDate, items]);
+
   const startGame = () => {
     if (hasPlayedToday) return; // Prevent playing again if already played
     setGameState('playing');
-    setCurrentIndex(0);
-    setGuesses(Array(items.length).fill(null));
-    setUserSwipes([]);
-    setScore(0);
-    setFeedback(null);
-    setIsTransitioning(false);
+    if (!hasInProgressGame) {
+      setCurrentIndex(0);
+      setGuesses(Array(items.length).fill(null));
+      setUserSwipes([]);
+      setScore(0);
+      setFeedback(null);
+      setIsTransitioning(false);
+    }
   };
 
   const showResults = () => {
@@ -96,19 +132,17 @@ function App() {
     const item = items[index];
     const swipedFree = isCorrect ? item.isFree : !item.isFree;
 
-    setUserSwipes((prev) => {
-      const next = [...prev];
-      next[index] = swipedFree;
-      return next;
-    });
+    const nextSwipes = [...userSwipes];
+    nextSwipes[index] = swipedFree;
 
-    setGuesses((prev) => {
-      const next = [...prev];
-      next[index] = isCorrect;
-      return next;
-    });
+    const nextGuesses = [...guesses];
+    nextGuesses[index] = isCorrect;
 
-    if (isCorrect) setScore((prev) => prev + 1);
+    const nextScore = isCorrect ? score + 1 : score;
+
+    setUserSwipes(nextSwipes);
+    setGuesses(nextGuesses);
+    if (isCorrect) setScore(nextScore);
 
     setCountdown(10);
     setFeedback({
@@ -120,6 +154,21 @@ function App() {
       image: item.image,
       location: item.location,
     });
+
+    // Save progress to local storage (only if it's not the last card, which is handled on dismiss/game_over)
+    if (gameDate) {
+      const nextIndex = index + 1;
+      if (nextIndex < items.length) {
+        const progressData = {
+          currentIndex: nextIndex,
+          score: nextScore,
+          guesses: nextGuesses,
+          userSwipes: nextSwipes,
+        };
+        localStorage.setItem(`freejiji_progress_${gameDate}`, JSON.stringify(progressData));
+        setHasInProgressGame(true);
+      }
+    }
   };
 
   const handleFeedbackDismiss = async () => {
@@ -131,6 +180,10 @@ function App() {
     setIsTransitioning(false);
 
     if (nextIndex >= items.length) {
+      if (gameDate) {
+        localStorage.removeItem(`freejiji_progress_${gameDate}`);
+      }
+      setHasInProgressGame(false);
       const updated = await saveGameResult(score, guesses, userSwipes, localItems, gameDate);
       if (updated) {
         setLocalItems(updated);
@@ -232,6 +285,13 @@ function App() {
                   >
                     Show Results
                   </button>
+                ) : hasInProgressGame ? (
+                  <button
+                    onClick={startGame}
+                    className="w-full py-4.5 rounded-2xl bg-[#00ff87] text-black font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  >
+                    RESUME
+                  </button>
                 ) : (
                   <button
                     onClick={startGame}
@@ -285,6 +345,10 @@ function App() {
             onResetStats={async () => {
               const ok = await resetStats(gameDate);
               if (ok) {
+                if (gameDate) {
+                  localStorage.removeItem(`freejiji_progress_${gameDate}`);
+                }
+                setHasInProgressGame(false);
                 setHasPlayedToday(false);
                 setCompletedGameData(null);
                 setGameState('start');
