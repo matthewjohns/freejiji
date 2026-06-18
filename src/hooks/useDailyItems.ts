@@ -83,6 +83,8 @@ export function useDailyItems(): DailyItemsResult {
           isFree: item.isFree ?? false,
           listingUrl: item.listingUrl,
           location: item.location ?? 'Canada',
+          correctCount: item.correctCount ?? 0,
+          totalCount: item.totalCount ?? 0,
         }));
 
         setItems(fetchedItems);
