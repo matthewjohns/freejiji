@@ -55,7 +55,7 @@ export const CardStack = forwardRef<CardStackRef, CardStackProps>(({
     // Card has already been swiped
     if (diff < 0) {
       return {
-        zIndex: items.length - index,
+        zIndex: 0,
         pointerEvents: 'none' as const,
         opacity: 0,
         transition: 'opacity 0.4s ease, transform 0.4s ease',

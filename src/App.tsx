@@ -110,6 +110,7 @@ function App() {
 
     if (isCorrect) setScore((prev) => prev + 1);
 
+    setCountdown(10);
     setFeedback({
       isCorrect,
       actualPrice: item.actualPrice,
@@ -139,13 +140,6 @@ function App() {
       setGameState('game_over');
     }
   };
-
-  // Set countdown to 10 when feedback modal opens
-  useEffect(() => {
-    if (feedback) {
-      setCountdown(10);
-    }
-  }, [feedback]);
 
   // Handle countdown timer decrement and auto-dismiss
   useEffect(() => {
