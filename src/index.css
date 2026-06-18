@@ -784,3 +784,15 @@ body {
   border-color: rgba(255, 0, 127, 0.2) !important;
   color: #ff007f !important;
 }
+
+.bg-\[\#00ff87\] {
+  background-color: #00ff87 !important;
+}
+
+.text-black {
+  color: #000000 !important;
+}
+
+.hover\:shadow-\[0_0_30px_rgba\(0\,255\,135\,0\.6\)\]:hover {
+  box-shadow: 0 0 30px rgba(0, 255, 135, 0.6);
+}

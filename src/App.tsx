@@ -243,7 +243,7 @@ function App() {
                     onClick={startGame}
                     className="w-full py-4.5 rounded-2xl bg-[#00ff87] text-black font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                   >
-                    Start Swiping
+                    START
                   </button>
                 )}
               </div>

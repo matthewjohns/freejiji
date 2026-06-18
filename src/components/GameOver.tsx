@@ -268,7 +268,7 @@ export const GameOver: React.FC<GameOverProps> = ({
       <div className="flex gap-2 w-full mt-2 flex-shrink-0">
         <button
           onClick={shareScore}
-          className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/10 border border-white/10 text-white font-extrabold text-xs tracking-wider uppercase transition-all duration-300 hover:bg-white/15 active:scale-[0.98] cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#00ff87] text-black font-extrabold text-xs tracking-wider uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] active:scale-[0.98] cursor-pointer"
         >
           <Share2 className="w-4 h-4" />
           {copied ? 'Copied!' : 'Share Score'}
