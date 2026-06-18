@@ -11,7 +11,7 @@ import type { KijijiItem } from './types';
 
 function App() {
   const { user, stats, loading: statsLoading, saveGameResult, fetchTodayHistory, resetStats } = useFirebaseStats();
-  const { items, gameDate, loading: itemsLoading, error: itemsError } = useDailyItems();
+  const { items, gameDate, loading: itemsLoading, error: itemsError } = useDailyItems(!!user);
 
   const [gameState, setGameState] = useState<'start' | 'playing' | 'game_over'>('start');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -19,6 +19,7 @@ function App() {
   const [userSwipes, setUserSwipes] = useState<boolean[]>([]);
   const [score, setScore] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [countdown, setCountdown] = useState(10);
   const [feedback, setFeedback] = useState<{
     isCorrect: boolean;
     actualPrice: number;
@@ -139,6 +140,29 @@ function App() {
     }
   };
 
+  // Set countdown to 10 when feedback modal opens
+  useEffect(() => {
+    if (feedback) {
+      setCountdown(10);
+    }
+  }, [feedback]);
+
+  // Handle countdown timer decrement and auto-dismiss
+  useEffect(() => {
+    if (!feedback) return;
+
+    if (countdown <= 0) {
+      handleFeedbackDismiss();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [feedback, countdown]);
+
   const handleSwipeLeftButton = () => {
     if (isTransitioning || currentIndex >= items.length) return;
     cardStackRef.current?.swipe('left');
@@ -164,8 +188,8 @@ function App() {
       <main className="game-container">
         {/* ── Start screen ── */}
         {gameState === 'start' && (
-          <div className="flex-1 flex flex-col justify-between items-center w-full h-full text-center glass-card p-8 border-white/10 bg-black/30 backdrop-blur-2xl">
-            <div className="flex-1 flex flex-col justify-center items-center gap-6">
+          <div className="flex-1 flex flex-col justify-center items-center w-full h-full text-center glass-card p-8 border-white/10 bg-black/30 backdrop-blur-2xl">
+            <div className="flex flex-col justify-center items-center gap-6 w-full max-w-sm">
               {/* Animated Logo */}
               <div className="relative flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#00ff87] via-[#00d2ff] to-[#8e2de2] shadow-2xl shadow-[#00ff87]/20 animate-bounce">
                 <ShoppingBag className="w-10 h-10 text-white" />
@@ -180,48 +204,50 @@ function App() {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 max-w-sm px-2">
+              <div className="flex flex-col gap-3 w-full px-2">
                 <p className="text-base text-white/80 leading-relaxed bg-white/5 border border-white/5 p-4 rounded-2xl">
                   We show you 10 online classified listings. Swipe <span className="text-[#00ff87] font-bold">Right</span> if you think they are listed for <span className="text-[#00ff87] font-bold">FREE</span>, or swipe <span className="text-[#ff007f] font-bold">Left</span> if they are <span className="text-[#ff007f] font-bold">PAID</span>.
                 </p>
               </div>
-            </div>
 
-            {/* CTA — changes based on load state */}
-            {isLoading ? (
-              <div className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white/40 text-sm font-semibold">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading today's listings...
+              {/* CTA — changes based on load state */}
+              <div className="w-full px-2">
+                {isLoading ? (
+                  <div className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white/40 text-sm font-semibold">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading today's listings...
+                  </div>
+                ) : itemsError === 'no-content' || itemsError === 'not-ready' ? (
+                  <div className="w-full flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
+                      <CalendarX className="w-4 h-4" />
+                      No game available yet today — check back soon!
+                    </div>
+                  </div>
+                ) : itemsError === 'fetch-error' ? (
+                  <div className="w-full flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2 text-[#ff007f] text-sm font-semibold">
+                      <WifiOff className="w-4 h-4" />
+                      Couldn't load today's game — check your connection
+                    </div>
+                  </div>
+                ) : hasPlayedToday ? (
+                  <button
+                    onClick={showResults}
+                    className="w-full py-4.5 rounded-2xl bg-[#00ff87] text-black font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  >
+                    Show Results
+                  </button>
+                ) : (
+                  <button
+                    onClick={startGame}
+                    className="w-full py-4.5 rounded-2xl bg-[#00ff87] text-black font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  >
+                    Start Swiping
+                  </button>
+                )}
               </div>
-            ) : itemsError === 'no-content' || itemsError === 'not-ready' ? (
-              <div className="w-full flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
-                  <CalendarX className="w-4 h-4" />
-                  No game available yet today — check back soon!
-                </div>
-              </div>
-            ) : itemsError === 'fetch-error' ? (
-              <div className="w-full flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2 text-[#ff007f] text-sm font-semibold">
-                  <WifiOff className="w-4 h-4" />
-                  Couldn't load today's game — check your connection
-                </div>
-              </div>
-            ) : hasPlayedToday ? (
-              <button
-                onClick={showResults}
-                className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                Show Results
-              </button>
-            ) : (
-              <button
-                onClick={startGame}
-                className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-[#00ff87] via-[#00d2ff] to-[#8e2de2] text-white font-extrabold text-lg tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                Start Swiping
-              </button>
-            )}
+            </div>
           </div>
         )}
 
@@ -331,8 +357,11 @@ function App() {
                 </span>
               </p>
 
-              <div className="text-[9px] uppercase tracking-[2px] text-white/30 font-bold animate-pulse mt-2">
+              <div className="text-xs uppercase tracking-[2px] text-white font-extrabold animate-pulse mt-3">
                 Tap anywhere to continue
+              </div>
+              <div className="text-[10px] text-white/60 font-semibold mt-1.5 select-none">
+                Auto-continuing in {countdown}s...
               </div>
             </div>
           </div>

@@ -287,19 +287,19 @@ body {
 }
 
 .swipe-badge-free {
-  right: 30px;
+  left: 30px;
   border: 4px solid var(--neon-free);
   color: var(--neon-free);
-  transform: rotate(12deg);
+  transform: rotate(-12deg);
   text-shadow: 0 0 15px rgba(0, 255, 135, 0.3);
   box-shadow: 0 0 15px rgba(0, 255, 135, 0.1);
 }
 
 .swipe-badge-paid {
-  left: 30px;
+  right: 30px;
   border: 4px solid var(--neon-paid);
   color: var(--neon-paid);
-  transform: rotate(-12deg);
+  transform: rotate(12deg);
   text-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
   box-shadow: 0 0 15px rgba(255, 0, 127, 0.1);
 }

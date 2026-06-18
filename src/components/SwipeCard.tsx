@@ -103,9 +103,9 @@ export const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
     }
   };
 
-  // Badge opacities based on absolute horizontal displacement
-  const freeOpacity = position.x > 25 ? Math.min((position.x - 25) / 95, 1) : 0;
-  const paidOpacity = position.x < -25 ? Math.min((Math.abs(position.x) - 25) / 95, 1) : 0;
+  // Badge opacities based on absolute horizontal displacement (fade in much faster for mobile)
+  const freeOpacity = position.x > 8 ? Math.min((position.x - 8) / 32, 1) : 0;
+  const paidOpacity = position.x < -8 ? Math.min((Math.abs(position.x) - 8) / 32, 1) : 0;
 
   // Determine active transform rules
   const transformStyle = flyOut || isDragging
@@ -138,7 +138,7 @@ export const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
             className="swipe-badge swipe-badge-free"
             style={{
               opacity: freeOpacity,
-              transform: `rotate(${Math.min(position.x * 0.1, 15)}deg) scale(${1 + Math.min(position.x * 0.001, 0.15)})`,
+              transform: `rotate(${Math.max(-position.x * 0.12, -15)}deg) scale(${1 + Math.min(position.x * 0.001, 0.15)})`,
             }}
           >
             Free
@@ -147,7 +147,7 @@ export const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
             className="swipe-badge swipe-badge-paid"
             style={{
               opacity: paidOpacity,
-              transform: `rotate(${Math.max(position.x * 0.1, -15)}deg) scale(${1 + Math.min(Math.abs(position.x) * 0.001, 0.15)})`,
+              transform: `rotate(${Math.min(Math.abs(position.x) * 0.12, 15)}deg) scale(${1 + Math.min(Math.abs(position.x) * 0.001, 0.15)})`,
             }}
           >
             Paid

@@ -42,13 +42,14 @@ export interface DailyItemsResult {
   error: 'no-content' | 'not-ready' | 'fetch-error' | null;
 }
 
-export function useDailyItems(): DailyItemsResult {
+export function useDailyItems(isAuthenticated: boolean): DailyItemsResult {
   const gameDate = getGameDateString();
   const [items, setItems] = useState<KijijiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<DailyItemsResult['error']>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     let cancelled = false;
 
     async function fetchItems() {
@@ -100,7 +101,7 @@ export function useDailyItems(): DailyItemsResult {
 
     fetchItems();
     return () => { cancelled = true; };
-  }, [gameDate]);
+  }, [gameDate, isAuthenticated]);
 
-  return { items, gameDate, loading, error };
+  return { items, gameDate, loading: !isAuthenticated || loading, error };
 }

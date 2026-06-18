@@ -134,7 +134,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   const totalGamesInDist = Object.values(distribution).reduce((a, b) => a + b, 0);
   const divisor = totalGamesInDist > 0 ? totalGamesInDist : 1;
 
-  const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const scores = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const distributionRows = scores.map(s => {
     const count = distribution[s] || 0;
     const pct = (count / divisor) * 100;
