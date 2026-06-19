@@ -1,4 +1,10 @@
-import { track } from '@vercel/analytics';
+import posthog from 'posthog-js';
+
+// Initialize PostHog using the provided Project Token and API Host
+posthog.init('phc_Bsv7m4PpnKUnXbMFcoNVMscKSQBrbspoLgjJ89MWESSG', {
+  api_host: 'https://us.i.posthog.com',
+  person_profiles: 'identified_only',
+});
 
 /**
  * Track when a game starts today.
@@ -10,7 +16,7 @@ export function trackGameStarted(gameDate: string) {
   const startedKey = `freejiji_game_started_${gameDate}`;
   if (!localStorage.getItem(startedKey)) {
     try {
-      track('game_started');
+      posthog.capture('game_started');
       localStorage.setItem(startedKey, 'true');
     } catch (err) {
       console.error('[Analytics] Failed to track game_started:', err);
@@ -24,7 +30,7 @@ export function trackGameStarted(gameDate: string) {
  */
 export function trackGameCompleted(score: number) {
   try {
-    track('game_completed', { score });
+    posthog.capture('game_completed', { score });
   } catch (err) {
     console.error('[Analytics] Failed to track game_completed:', err);
   }
@@ -35,7 +41,7 @@ export function trackGameCompleted(score: number) {
  */
 export function trackShareClicked() {
   try {
-    track('share_clicked');
+    posthog.capture('share_clicked');
   } catch (err) {
     console.error('[Analytics] Failed to track share_clicked:', err);
   }
@@ -50,7 +56,7 @@ export function trackStreakMilestone(length: number, gameDate: string) {
   const streakKey = `freejiji_streak_tracked_${gameDate}`;
   if (!localStorage.getItem(streakKey)) {
     try {
-      track('streak_milestone', { length });
+      posthog.capture('streak_milestone', { length });
       localStorage.setItem(streakKey, 'true');
     } catch (err) {
       console.error('[Analytics] Failed to track streak_milestone:', err);
@@ -64,8 +70,9 @@ export function trackStreakMilestone(length: number, gameDate: string) {
 export function trackListingClicked(itemId: string) {
   if (!itemId) return;
   try {
-    track('listing_clicked', { item_id: itemId });
+    posthog.capture('listing_clicked', { item_id: itemId });
   } catch (err) {
     console.error('[Analytics] Failed to track listing_clicked:', err);
   }
 }
+
