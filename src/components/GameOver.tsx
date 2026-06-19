@@ -321,39 +321,75 @@ export const GameOver: React.FC<GameOverProps> = ({
       </div>
 
       {/* Daily Score Distribution Chart */}
-      <div className="flex-shrink-0 flex flex-col gap-1.5 my-2 p-3 rounded-2xl bg-white/5 border border-white/5">
-        <div className="text-center">
+      <div className="flex-shrink-0 flex flex-col gap-2.5 my-2 p-4 rounded-2xl bg-white/5 border border-white/10">
+        <div className="flex justify-between items-center px-1">
           <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30">
             Today's Score Distribution
           </h4>
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+            {Object.values(dailyDistribution).reduce((a, b) => a + b, 0)} games
+          </span>
         </div>
-        <div className="flex items-end justify-between h-16 px-1 pt-1">
+        
+        {/* Bars Container */}
+        <div className="flex items-end justify-between h-28 px-1">
           {scores.map((s) => {
             const count = dailyDistribution[s] || 0;
-            const heightPct = dailyMaxCount > 0 ? (count / dailyMaxCount) * 80 : 0;
+            // Make the max bar height take up 85% of container height to leave room for the count label above
+            const heightPct = dailyMaxCount > 0 ? (count / dailyMaxCount) * 85 : 0;
             const isCurrent = s === score;
             return (
-              <div key={s} className="flex flex-col items-center flex-1 gap-1">
-                {/* Bar */}
-                <div className="w-full flex justify-center h-10 items-end">
-                  <div
-                    className={`rounded-full transition-all duration-500 ${
-                      isCurrent ? 'bg-[#00ff87] shadow-[0_0_12px_rgba(0,255,135,0.6)]' : 'bg-white/20'
-                    }`}
-                    style={{
-                      height: `${Math.max(heightPct, 8)}%`,
-                      width: '10px'
-                    }}
-                    title={`${count} games`}
-                  />
-                </div>
-                {/* Label */}
-                <span className={`text-[10px] font-bold ${isCurrent ? 'text-[#00ff87]' : 'text-white/40'}`}>
-                  {s}
+              <div key={s} className="flex-1 flex flex-col justify-end items-center h-full">
+                {/* Count label above the bar (visible only if count > 0) */}
+                <span 
+                  className={`text-[9px] font-extrabold mb-1.5 transition-all duration-300 ${
+                    count > 0 ? 'opacity-100' : 'opacity-0'
+                  } ${isCurrent ? 'text-[#00ff87]' : 'text-white/60'}`}
+                >
+                  {count}
                 </span>
+                
+                {/* Bar */}
+                <div
+                  className={`w-3.5 sm:w-4 rounded-t-md transition-all duration-500 ${
+                    isCurrent 
+                      ? 'bg-[#00ff87] shadow-[0_0_12px_rgba(0,255,135,0.8)]' 
+                      : count > 0 
+                        ? 'bg-white/40 hover:bg-white/50' 
+                        : 'bg-white/5'
+                  }`}
+                  style={{
+                    height: count > 0 ? `${Math.max(heightPct, 6)}%` : '3px',
+                  }}
+                  title={`${count} games with score ${s}`}
+                />
               </div>
             );
           })}
+        </div>
+
+        {/* Baseline and Labels Row */}
+        <div className="flex flex-col gap-1.5 mt-1">
+          {/* Baseline */}
+          <div className="h-[1px] bg-white/10 w-full" />
+          {/* Labels */}
+          <div className="flex justify-between px-1">
+            {scores.map((s) => {
+              const isCurrent = s === score;
+              return (
+                <span
+                  key={s}
+                  className={`flex-1 text-center text-[10px] font-extrabold transition-all duration-300 ${
+                    isCurrent 
+                      ? 'text-[#00ff87] drop-shadow-[0_0_4px_rgba(0,255,135,0.4)] font-black' 
+                      : 'text-white/40'
+                  }`}
+                >
+                  {s}
+                </span>
+              );
+            })}
+          </div>
         </div>
       </div>
 
