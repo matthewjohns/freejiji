@@ -3,6 +3,7 @@ import { ExternalLink, Medal, Frown, Share2, BarChart3, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { KijijiItem } from '../types';
 import type { UserStats } from '../hooks/useFirebaseStats';
+import { trackShareClicked, trackListingClicked } from '../utils/analytics';
 
 interface GameOverProps {
   items: KijijiItem[];
@@ -108,6 +109,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   const percentage = (score / totalItems) * 100;
 
   const shareScore = () => {
+    trackShareClicked();
     let performanceText = '';
     if (score === totalItems) {
       performanceText = "I'm Freejiji Elite! 🥇";
@@ -309,6 +311,7 @@ export const GameOver: React.FC<GameOverProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`View ${item.title} original listing`}
+                    onClick={() => trackListingClicked(item.id)}
                     className="p-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />

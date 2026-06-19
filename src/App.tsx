@@ -8,6 +8,7 @@ import { useFirebaseStats } from './hooks/useFirebaseStats';
 import { useDailyItems } from './hooks/useDailyItems';
 import { ShoppingBag, Check, X, MapPin, Loader2, CalendarX, WifiOff } from 'lucide-react';
 import type { KijijiItem } from './types';
+import { trackGameStarted, trackGameCompleted, trackStreakMilestone } from './utils/analytics';
 
 function App() {
   const { user, stats, loading: statsLoading, saveGameResult, fetchTodayHistory, resetStats } = useFirebaseStats();
@@ -115,6 +116,20 @@ function App() {
     setHasInProgressGame(false);
   }, [gameDate, items]);
 
+  // Track when the game starts (first card renders)
+  useEffect(() => {
+    if (gameState === 'playing' && currentIndex === 0 && !hasInProgressGame && gameDate) {
+      trackGameStarted(gameDate);
+    }
+  }, [gameState, currentIndex, hasInProgressGame, gameDate]);
+
+  // Track streak milestone on initialization or game completion
+  useEffect(() => {
+    if (stats && gameDate && stats.lastPlayedDate === gameDate && stats.currentStreak > 0) {
+      trackStreakMilestone(stats.currentStreak, gameDate);
+    }
+  }, [stats, gameDate]);
+
   const startGame = () => {
     if (hasPlayedToday) return; // Prevent playing again if already played
     setGameState('playing');
@@ -201,6 +216,7 @@ function App() {
         setLocalItems(result.items);
         setLocalGlobalDist(result.scoreDistribution);
       }
+      trackGameCompleted(score);
       setHasPlayedToday(true);
       setCompletedGameData({ score, guesses, userSwipes });
       setGameState('game_over');
