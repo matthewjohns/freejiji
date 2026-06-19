@@ -63,7 +63,7 @@ function proxyImageUrl(originalUrl) {
   } else {
     cleanUrl = cleanUrl.replace(/\/s-l\d+(\.\w+)$/, '/s-l1200$1').split('?')[0];
   }
-  return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&w=800&h=600&fit=cover&output=webp&q=80`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&w=800&h=600&fit=inside&output=webp&q=80`;
 }
 
 // ─── Filtering ─────────────────────────────────────────────────────────────────
