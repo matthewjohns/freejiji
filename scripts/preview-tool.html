@@ -314,6 +314,8 @@
     doc,
     getDoc,
     updateDoc,
+    setDoc,
+    arrayUnion,
     collection,
     getDocs,
     query,
@@ -494,6 +496,28 @@
     const currentItem = day.items[idx];
     const wantFree = currentItem.isFree;
 
+    // Prompt for blacklist reason
+    const reason = prompt(
+      `Are you swapping "${currentItem.title}"?\n\nIf it's because of a specific category/word (e.g. "service", "ticket", "shipping"), enter it below to blacklist it from future scrapes:\n(Otherwise, leave empty and click OK to just swap)`
+    );
+
+    if (reason === null) {
+      // User clicked cancel
+      return;
+    }
+
+    const keyword = reason.trim().toLowerCase();
+    if (keyword) {
+      try {
+        await setDoc(doc(db, 'item_pool', 'blacklist'), {
+          keywords: arrayUnion(keyword)
+        }, { merge: true });
+      } catch (err) {
+        console.error('Failed to add to blacklist:', err);
+        showToast('Failed to add to blacklist', 'error');
+      }
+    }
+
     const pool = wantFree ? poolData.freeItems : poolData.paidItems;
     const usedIds = new Set(day.items.map(i => i.id));
     const available = pool.filter(i => !usedIds.has(i.id));
@@ -509,7 +533,11 @@
     // Persist to Firestore
     try {
       await updateDoc(doc(db, 'daily_games', date), { items: day.items });
-      showToast('Item swapped!');
+      if (keyword) {
+        showToast(`Blacklisted "${keyword}" & swapped item!`);
+      } else {
+        showToast('Item swapped!');
+      }
       refreshDayPanel(date);
     } catch (err) {
       console.error('Swap failed:', err);

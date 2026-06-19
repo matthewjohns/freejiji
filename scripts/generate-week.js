@@ -77,10 +77,13 @@ function isWithinTwoWeeks(dateStr) {
   return d >= cutoff;
 }
 
-// Check for banned keywords
-function hasBannedKeyword(title = '', description = '') {
+// Check for banned keywords (both hardcoded and dynamic remote blacklist)
+let remoteBannedKeywords = [];
+
+function getBannedKeywordMatch(title = '', description = '') {
   const combined = `${title} ${description}`.toLowerCase();
-  return BANNED_KEYWORDS.some(kw => combined.includes(kw));
+  const allBanned = [...BANNED_KEYWORDS, ...remoteBannedKeywords];
+  return allBanned.find(kw => combined.includes(kw.toLowerCase()));
 }
 
 // ─── Scrape a pool of items ────────────────────────────────────────────────────
@@ -196,7 +199,11 @@ async function scrapePool(baseUrl, type, targetCount) {
       if (!isWithinTwoWeeks(listing.dateStr)) continue;
 
       // Banned keywords check
-      if (hasBannedKeyword(listing.title, listing.description)) continue;
+      const matchedKeyword = getBannedKeywordMatch(listing.title, listing.description);
+      if (matchedKeyword) {
+        console.log(`  🚫 Skipped "${listing.title}" due to blacklisted keyword "${matchedKeyword}"`);
+        continue;
+      }
 
       // Category exclusions for paid items
       if (type === 'paid') {
@@ -262,10 +269,20 @@ async function main() {
   console.log(`📅  Generating ${DAYS_TO_GENERATE} days starting today (Toronto time)`);
   if (DRY_RUN) console.log('🧪  DRY RUN — nothing written to Firestore\n');
 
-  let db;
-  if (!DRY_RUN) {
-    db = initFirebase();
-    console.log('✅  Firebase connected\n');
+  const db = initFirebase();
+  console.log('✅  Firebase connected\n');
+
+  // Load dynamic blacklist from Firestore
+  try {
+    const blacklistDoc = await db.collection('item_pool').doc('blacklist').get();
+    if (blacklistDoc.exists) {
+      remoteBannedKeywords = blacklistDoc.data().keywords || [];
+      console.log(`Loaded ${remoteBannedKeywords.length} dynamic banned keywords from Firestore:`, remoteBannedKeywords);
+    } else {
+      console.log('No dynamic blacklist found in Firestore (will use defaults).');
+    }
+  } catch (err) {
+    console.error('Failed to load blacklist from Firestore:', err.message);
   }
 
   // ── Scrape FREE pool ──
