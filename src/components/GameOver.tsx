@@ -321,60 +321,47 @@ export const GameOver: React.FC<GameOverProps> = ({
       </div>
 
       {/* Daily Score Distribution Chart */}
-      <div className="flex-shrink-0 flex flex-col gap-3 mt-2 p-4 rounded-2xl bg-white/5 border border-white/10">
-        <div className="text-center">
+      <div className="score-distribution-box">
+        <div className="score-distribution-title">
           <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30">
             Today's Score Distribution
           </h4>
         </div>
         
-        {/* Grid-based Bars Container */}
-        <div className="grid grid-cols-11 justify-items-center items-end h-24 px-2">
+        {/* Bars Container */}
+        <div className="score-chart-bars">
           {scores.map((s) => {
             const count = dailyDistribution[s] || 0;
             const heightPct = dailyMaxCount > 0 ? (count / dailyMaxCount) * 100 : 0;
             const isCurrent = s === score;
             return (
-              <div
-                key={s}
-                className={`w-3 sm:w-3.5 rounded-t-md transition-all duration-500 ${
-                  isCurrent 
-                    ? 'bg-[#00ff87] shadow-[0_0_12px_rgba(0,255,135,0.8)]' 
-                    : count > 0 
-                      ? 'bg-white/40 hover:bg-white/50' 
-                      : 'bg-white/5'
-                }`}
-                style={{
-                  height: count > 0 ? `${Math.max(heightPct, 6)}%` : '3px',
-                }}
-                title={`${count} games with score ${s}`}
-              />
+              <div key={s} className="score-chart-col">
+                <div
+                  className={`score-chart-bar ${count > 0 ? 'has-score' : ''} ${isCurrent ? 'is-current' : ''}`}
+                  style={{
+                    height: count > 0 ? `${Math.max(heightPct, 6)}%` : '3px',
+                  }}
+                  title={`${count} games with score ${s}`}
+                />
+              </div>
             );
           })}
         </div>
 
         {/* Baseline and Labels Row */}
-        <div className="flex flex-col gap-1 mt-1">
-          {/* Baseline */}
-          <div className="h-[1px] bg-white/10 w-full" />
-          {/* Labels */}
-          <div className="grid grid-cols-11 justify-items-center px-2">
-            {scores.map((s) => {
-              const isCurrent = s === score;
-              return (
-                <span
-                  key={s}
-                  className={`text-center text-[10px] font-extrabold transition-all duration-300 ${
-                    isCurrent 
-                      ? 'text-[#00ff87] drop-shadow-[0_0_4px_rgba(0,255,135,0.4)] font-black' 
-                      : 'text-white/45'
-                  }`}
-                >
-                  {s}
-                </span>
-              );
-            })}
-          </div>
+        <div className="score-chart-baseline" />
+        <div className="score-chart-labels">
+          {scores.map((s) => {
+            const isCurrent = s === score;
+            return (
+              <span
+                key={s}
+                className={`score-chart-label ${isCurrent ? 'is-current' : ''}`}
+              >
+                {s}
+              </span>
+            );
+          })}
         </div>
       </div>
 
