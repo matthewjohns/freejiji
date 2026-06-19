@@ -71,8 +71,8 @@ function App() {
       } else {
         setHasPlayedToday(false);
         setCompletedGameData(null);
-        // If a new day loaded and they haven't played today, reset to start screen
-        setGameState('start');
+        // If a new day loaded and they haven't played today, reset to start screen only if they were previously looking at the game over screen
+        setGameState((prev) => (prev === 'game_over' ? 'start' : prev));
       }
     }
     checkHistory();

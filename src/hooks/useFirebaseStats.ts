@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
@@ -121,7 +121,7 @@ export const useFirebaseStats = () => {
     }
   };
 
-  const fetchTodayHistory = async (todayStr: string) => {
+  const fetchTodayHistory = useCallback(async (todayStr: string) => {
     if (!auth.currentUser) return null;
     try {
       const scoreDocRef = doc(db, 'users', auth.currentUser.uid, 'history', todayStr);
@@ -138,9 +138,9 @@ export const useFirebaseStats = () => {
       console.error('Error fetching today history:', error);
     }
     return null;
-  };
+  }, []);
 
-  const saveGameResult = async (
+  const saveGameResult = useCallback(async (
     score: number,
     guesses: (boolean | null)[],
     userSwipes: boolean[],
@@ -237,9 +237,9 @@ export const useFirebaseStats = () => {
       console.error('Error saving game result to Firebase:', error);
       return null;
     }
-  };
+  }, [user, stats]);
 
-  const resetStats = async (gameDate: string) => {
+  const resetStats = useCallback(async (gameDate: string) => {
     if (!user) return false;
     try {
       const userDocRef = doc(db, 'users', user.uid);
@@ -267,7 +267,7 @@ export const useFirebaseStats = () => {
       console.error('Failed to reset stats:', error);
       return false;
     }
-  };
+  }, [user]);
 
   return {
     user,
