@@ -38,6 +38,7 @@ function getGameDateString(): string {
 export interface DailyItemsResult {
   items: KijijiItem[];
   gameDate: string;
+  globalScoreDistribution: { [key: number]: number } | null;
   loading: boolean;
   error: 'no-content' | 'not-ready' | 'fetch-error' | null;
 }
@@ -45,6 +46,7 @@ export interface DailyItemsResult {
 export function useDailyItems(isAuthenticated: boolean): DailyItemsResult {
   const gameDate = getGameDateString();
   const [items, setItems] = useState<KijijiItem[]>([]);
+  const [globalScoreDistribution, setGlobalScoreDistribution] = useState<{ [key: number]: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<DailyItemsResult['error']>(null);
 
@@ -88,6 +90,10 @@ export function useDailyItems(isAuthenticated: boolean): DailyItemsResult {
           totalCount: item.totalCount ?? 0,
         }));
 
+        const globalDist = data.scoreDistribution || {
+          0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+        };
+        setGlobalScoreDistribution(globalDist);
         setItems(fetchedItems);
       } catch (err) {
         if (!cancelled) {
@@ -103,5 +109,5 @@ export function useDailyItems(isAuthenticated: boolean): DailyItemsResult {
     return () => { cancelled = true; };
   }, [gameDate, isAuthenticated]);
 
-  return { items, gameDate, loading: !isAuthenticated || loading, error };
+  return { items, gameDate, globalScoreDistribution, loading: !isAuthenticated || loading, error };
 }

@@ -11,6 +11,7 @@ interface GameOverProps {
   userSwipes: boolean[]; // Array representing whether the user guessed Free (true) or Paid (false) for each item
   stats: UserStats | null;
   statsLoading: boolean;
+  globalScoreDistribution: { [key: number]: number } | null;
   onRestart: () => void;
   onResetStats?: () => void;
 }
@@ -66,6 +67,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   userSwipes,
   stats,
   statsLoading,
+  globalScoreDistribution,
   onResetStats,
 }) => {
   const totalItems = items.length;
@@ -183,6 +185,12 @@ export const GameOver: React.FC<GameOverProps> = ({
   const divisor = totalGamesInDist > 0 ? totalGamesInDist : 1;
 
   const scores = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  const dailyDistribution = globalScoreDistribution || {
+    0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+  };
+  const dailyMaxCount = Math.max(...Object.values(dailyDistribution), 1);
+
   const distributionRows = scores.map(s => {
     const count = distribution[s] || 0;
     const pct = (count / divisor) * 100;
@@ -221,7 +229,7 @@ export const GameOver: React.FC<GameOverProps> = ({
       </div>
 
       {/* Recap List */}
-      <div className="flex-1 flex flex-col gap-2 my-3 overflow-hidden">
+      <div className="flex-shrink-0 flex flex-col gap-2 my-2 overflow-hidden" style={{ height: '180px' }}>
         <div className="flex justify-between items-center px-1">
           <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30">
             Today's Items Recap
@@ -306,6 +314,43 @@ export const GameOver: React.FC<GameOverProps> = ({
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Daily Score Distribution Chart */}
+      <div className="flex-shrink-0 flex flex-col gap-1.5 my-2 p-3 rounded-2xl bg-white/5 border border-white/5">
+        <div className="text-center">
+          <h4 className="text-[10px] font-bold uppercase tracking-[2.5px] text-white/30">
+            Today's Score Distribution
+          </h4>
+        </div>
+        <div className="flex items-end justify-between h-16 px-1 pt-1">
+          {scores.map((s) => {
+            const count = dailyDistribution[s] || 0;
+            const heightPct = dailyMaxCount > 0 ? (count / dailyMaxCount) * 80 : 0;
+            const isCurrent = s === score;
+            return (
+              <div key={s} className="flex flex-col items-center flex-1 gap-1">
+                {/* Bar */}
+                <div className="w-full flex justify-center h-10 items-end">
+                  <div
+                    className={`rounded-full transition-all duration-500 ${
+                      isCurrent ? 'bg-[#00ff87] shadow-[0_0_12px_rgba(0,255,135,0.6)]' : 'bg-white/20'
+                    }`}
+                    style={{
+                      height: `${Math.max(heightPct, 8)}%`,
+                      width: '10px'
+                    }}
+                    title={`${count} games`}
+                  />
+                </div>
+                {/* Label */}
+                <span className={`text-[10px] font-bold ${isCurrent ? 'text-[#00ff87]' : 'text-white/40'}`}>
+                  {s}
+                </span>
               </div>
             );
           })}

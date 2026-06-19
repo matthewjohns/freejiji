@@ -195,6 +195,9 @@ export const useFirebaseStats = () => {
       // 2. Perform transaction to update global correctness on daily_games/{date}
       const dailyGameRef = doc(db, 'daily_games', todayStr);
       let updatedItemsList = [...currentItems];
+      let updatedGlobalDist = {
+        0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+      };
 
       try {
         await runTransaction(db, async (transaction) => {
@@ -216,7 +219,18 @@ export const useFirebaseStats = () => {
             };
           });
 
-          transaction.update(dailyGameRef, { items: updatedItemsList });
+          const currentGlobalDist = dailyGameData.scoreDistribution || {
+            0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+          };
+          updatedGlobalDist = {
+            ...currentGlobalDist,
+            [score]: (currentGlobalDist[score] || 0) + 1
+          };
+
+          transaction.update(dailyGameRef, { 
+            items: updatedItemsList,
+            scoreDistribution: updatedGlobalDist
+          });
         });
       } catch (transError) {
         console.error('Transaction failed to update global stats:', transError);
@@ -231,7 +245,10 @@ export const useFirebaseStats = () => {
         ...updatedStatsData
       } : null);
 
-      return updatedItemsList;
+      return {
+        items: updatedItemsList,
+        scoreDistribution: updatedGlobalDist
+      };
 
     } catch (error) {
       console.error('Error saving game result to Firebase:', error);

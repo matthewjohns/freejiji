@@ -11,7 +11,7 @@ import type { KijijiItem } from './types';
 
 function App() {
   const { user, stats, loading: statsLoading, saveGameResult, fetchTodayHistory, resetStats } = useFirebaseStats();
-  const { items, gameDate, loading: itemsLoading, error: itemsError } = useDailyItems(!!user);
+  const { items, gameDate, globalScoreDistribution, loading: itemsLoading, error: itemsError } = useDailyItems(!!user);
 
   const [gameState, setGameState] = useState<'start' | 'playing' | 'game_over'>('start');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,6 +31,7 @@ function App() {
   } | null>(null);
 
   const [localItems, setLocalItems] = useState<KijijiItem[]>([]);
+  const [localGlobalDist, setLocalGlobalDist] = useState<{ [key: number]: number } | null>(null);
   const [hasPlayedToday, setHasPlayedToday] = useState(false);
   const [completedGameData, setCompletedGameData] = useState<{
     score: number;
@@ -46,7 +47,10 @@ function App() {
     if (items && items.length > 0) {
       setLocalItems(items);
     }
-  }, [items]);
+    if (globalScoreDistribution) {
+      setLocalGlobalDist(globalScoreDistribution);
+    }
+  }, [items, globalScoreDistribution]);
 
   // Check today's history to see if the user has already played
   useEffect(() => {
@@ -192,9 +196,10 @@ function App() {
         localStorage.removeItem(`freejiji_progress_${gameDate}`);
       }
       setHasInProgressGame(false);
-      const updated = await saveGameResult(score, guesses, userSwipes, localItems, gameDate);
-      if (updated) {
-        setLocalItems(updated);
+      const result = await saveGameResult(score, guesses, userSwipes, localItems, gameDate);
+      if (result) {
+        setLocalItems(result.items);
+        setLocalGlobalDist(result.scoreDistribution);
       }
       setHasPlayedToday(true);
       setCompletedGameData({ score, guesses, userSwipes });
@@ -349,6 +354,7 @@ function App() {
             userSwipes={userSwipes}
             stats={stats}
             statsLoading={statsLoading}
+            globalScoreDistribution={localGlobalDist}
             onRestart={startGame}
             onResetStats={async () => {
               const ok = await resetStats(gameDate);
