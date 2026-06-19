@@ -15,6 +15,50 @@ interface GameOverProps {
   onResetStats?: () => void;
 }
 
+const GOD_MESSAGES = [
+  "Ladies and gentlemen, behold your new god.",
+  "Nobody's perfect... except for you!",
+  "Put your thumb on ice, it's on fire!",
+  "You win some, you don't lose some!",
+  "Siiiiiick",
+  "Swish!",
+  "Have some internet bragging rights on the house."
+];
+
+const EXPERT_MESSAGES = [
+  "Nobody's perfect, but you got pretty close.",
+  "Did your thumb slip or something?",
+  "Hold your head high, but not that high",
+  "You're smarter than you look!",
+  "Better a diamond with a flaw than a pebble without."
+];
+
+const REGULAR_MESSAGES = [
+  "You win some, you lose some.",
+  "Nobody's perfect, and you just proved it.",
+  "Remember: swipe right if it's free, right if it's not free",
+  "You're not as bad as you smell.",
+  "You made some interesting choices there."
+];
+
+const RUBE_MESSAGES = [
+  "A fool and his money are soon parted.",
+  "Nobody's perfect, especially you.",
+  "Were you playing with your eyes closed?",
+  "At least you have your looks.",
+  "Better luck next time... much better.",
+  "They say you learn more from failure. You learned a lot.",
+  "You missed 100% of the shots you did take.",
+  "Imperfection is beauty... and you are so, so beautiful",
+  "You're so brave.",
+  "That was tough to watch.",
+  "Oof. Did you think today was opposite day?",
+  "Let's keep this between ourselves.",
+  "Ignorance is bliss.",
+  "Don't let this define you.",
+  "Why do you make everything so complicated?"
+];
+
 export const GameOver: React.FC<GameOverProps> = ({
   items,
   score,
@@ -94,31 +138,35 @@ export const GameOver: React.FC<GameOverProps> = ({
 
   // Determine feedback message, rank, rank color, and icon
   let rank = '';
-  let message = '';
   let rankColor = '';
   let displayIcon = null;
+  let messagePool: string[] = [];
 
   if (score === totalItems) {
     rank = 'Freejiji God';
-    message = 'Perfect! Have some internet bragging rights on the house.';
     rankColor = 'text-gold';
     displayIcon = <Medal className="w-9 h-9 text-gold" style={{ filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.4))' }} />;
+    messagePool = GOD_MESSAGES;
   } else if (percentage >= 75) {
     rank = 'Thrift Store Expert';
-    message = 'Pretty Good! Still, some room for improvement.';
     rankColor = 'text-silver';
     displayIcon = <Medal className="w-9 h-9 text-silver" style={{ filter: 'drop-shadow(0 0 6px rgba(203, 213, 225, 0.3))' }} />;
+    messagePool = EXPERT_MESSAGES;
   } else if (percentage >= 50) {
     rank = 'Garage Sale Regular';
-    message = "Not great! Maybe it's your first time, oh well.";
     rankColor = 'text-bronze';
     displayIcon = <Medal className="w-9 h-9 text-bronze" style={{ filter: 'drop-shadow(0 0 6px rgba(205, 127, 50, 0.3))' }} />;
+    messagePool = REGULAR_MESSAGES;
   } else {
-    rank = 'Retail Price Victim';
-    message = 'Oof! Did you think today was opposite day?';
+    rank = 'Rummage Sale Rube';
     rankColor = 'text-disappointed';
     displayIcon = <Frown className="w-9 h-9 text-disappointed" style={{ filter: 'drop-shadow(0 0 6px rgba(244, 63, 94, 0.3))' }} />;
+    messagePool = RUBE_MESSAGES;
   }
+
+  const [message] = useState(() => {
+    return messagePool[Math.floor(Math.random() * messagePool.length)];
+  });
 
   // Calculate statistics for score distribution modal
   const gamesPlayed = stats?.gamesPlayed || 0;
