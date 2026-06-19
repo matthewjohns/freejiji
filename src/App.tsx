@@ -62,9 +62,17 @@ function App() {
         // Clean up progress since game is already complete
         localStorage.removeItem(`freejiji_progress_${gameDate}`);
         setHasInProgressGame(false);
+        
+        // Sync completed game states for today and show game_over
+        setScore(historyData.score);
+        setGuesses(historyData.guesses);
+        setUserSwipes(historyData.userSwipes);
+        setGameState('game_over');
       } else {
         setHasPlayedToday(false);
         setCompletedGameData(null);
+        // If a new day loaded and they haven't played today, reset to start screen
+        setGameState('start');
       }
     }
     checkHistory();
