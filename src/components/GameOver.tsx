@@ -68,7 +68,7 @@ export const GameOver: React.FC<GameOverProps> = ({
     } else if (percentage >= 75) {
       performanceText = "I Freejiji'd good. 🥈";
     } else if (percentage >= 50) {
-      performanceText = "Ok Frijiji today 🥉";
+      performanceText = "Ok Freejiji today 🥉";
     } else {
       performanceText = "I participated in today's Freejiji 😞";
     }
