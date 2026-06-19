@@ -36,7 +36,7 @@ const EXPERT_MESSAGES = [
 const REGULAR_MESSAGES = [
   "You win some, you lose some.",
   "Nobody's perfect, and you just proved it.",
-  "Remember: swipe right if it's free, right if it's not free",
+  "Remember: swipe right if it's free, left if it's not free",
   "You're not as bad as you smell.",
   "You made some interesting choices there."
 ];
