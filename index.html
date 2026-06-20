@@ -57,10 +57,37 @@
   <p>aka Matthew Johns - Game Design - <a href="mailto:lasermammoth@gmail.com">lasermammoth@gmail.com</a></p>
 
   <h2>Projects</h2>
-  
+
   <dl>
     <dt><a href="/freejiji/">Freejiji</a></dt>
-    <dd>Swipe to determine free and paid online classified listings.</dd>
+    <dd>
+      Swipe to discern between free and paid online classified listings.
+      <br>
+      <a href="javascript:void(0)" id="more-link" onclick="toggleDetails()">[more]</a>
+      <div id="details-section" style="display: none; margin-top: 10px;">
+        <ul>
+          <li><strong>Daily Challenge Loop</strong>: Players evaluate 10 curated local classified listings to guess whether they are offered for free or require payment.</li>
+          <li><strong>Interactive Gesture Controls</strong>: Features tactile card-dragging controls for fast-paced decision making.</li>
+          <li><strong>Global Score Distribution</strong>: Automatically aggregates and displays real-time score statistics from all players in an interactive chart.</li>
+          <li><strong>Streak Retention Mechanics</strong>: Tracks consecutive days played to encourage daily player engagement.</li>
+          <li><strong>Anonymous Authentication</strong>: Utilizes silent account creation to sync personal histories and stats securely without a sign-up form.</li>
+          <li><strong>Lockout and Rollover Control</strong>: Restricts players to one game per calendar day, resetting automatically at midnight.</li>
+          <li><strong>Local State Preservation</strong>: Auto-saves current game progress to local storage, allowing seamless resume if the page is reloaded mid-game.</li>
+          <li><strong>Automated Content Ingestion</strong>: Employs an ingestion script to scrape, filter out spam, and schedule daily puzzle decks.</li>
+        </ul>
+      </div>
+    </dd>
   </dl>
+
+  <script>
+    function toggleDetails() {
+      const details = document.getElementById('details-section');
+      const link = document.getElementById('more-link');
+      if (details.style.display === 'none') {
+        details.style.display = 'block';
+        link.style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>
