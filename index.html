@@ -59,7 +59,7 @@
   <h2>Projects</h2>
 
   <dl>
-    <dt><a href="/freejiji/">Freejiji</a></dt>
+    <dt><a href="/freejiji/">Freejiji</a> (June 2026)</dt>
     <dd>
       Swipe to discern between free and paid online classified listings.
       <br>
@@ -75,6 +75,7 @@
           <li><strong>Local State Preservation</strong>: Auto-saves current game progress to local storage, allowing seamless resume if the page is reloaded mid-game.</li>
           <li><strong>Automated Content Ingestion</strong>: Employs an ingestion script to scrape, filter out spam, and schedule daily puzzle decks.</li>
         </ul>
+        <a href="javascript:void(0)" id="less-link" onclick="toggleDetails()">[less]</a>
       </div>
     </dd>
   </dl>
@@ -86,6 +87,9 @@
       if (details.style.display === 'none') {
         details.style.display = 'block';
         link.style.display = 'none';
+      } else {
+        details.style.display = 'none';
+        link.style.display = 'inline';
       }
     }
   </script>
