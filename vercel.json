@@ -1,12 +1,9 @@
 {
-  "redirects": [
+  "rewrites": [
     {
       "source": "/",
-      "destination": "/freejiji/",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
+      "destination": "/portfolio.html"
+    },
     {
       "source": "/freejiji/assets/(.*)",
       "destination": "/assets/$1"
