@@ -63,33 +63,63 @@
     <dd>
       Swipe to discern between free and paid online classified listings.
       <br>
-      <a href="javascript:void(0)" id="more-link" onclick="toggleDetails()">[more]</a>
+      <a href="javascript:void(0)" id="more-link" onclick="toggleDetails(true)">[more]</a>
       <div id="details-section" style="display: none; margin-top: 10px;">
-        <ul>
-          <li><strong>Daily Challenge Loop</strong>: Players evaluate 10 curated local classified listings to guess whether they are offered for free or require payment.</li>
-          <li><strong>Interactive Gesture Controls</strong>: Features tactile card-dragging controls for fast-paced decision making.</li>
-          <li><strong>Global Score Distribution</strong>: Automatically aggregates and displays real-time score statistics from all players in an interactive chart.</li>
-          <li><strong>Streak Retention Mechanics</strong>: Tracks consecutive days played to encourage daily player engagement.</li>
-          <li><strong>Anonymous Authentication</strong>: Utilizes silent account creation to sync personal histories and stats securely without a sign-up form.</li>
-          <li><strong>Lockout and Rollover Control</strong>: Restricts players to one game per calendar day, resetting automatically at midnight.</li>
-          <li><strong>Local State Preservation</strong>: Auto-saves current game progress to local storage, allowing seamless resume if the page is reloaded mid-game.</li>
-          <li><strong>Automated Content Ingestion</strong>: Employs an ingestion script to scrape, filter out spam, and schedule daily puzzle decks.</li>
-        </ul>
-        <a href="javascript:void(0)" id="less-link" onclick="toggleDetails()">[less]</a>
+        <div id="bullet-points-section">
+          <ul>
+            <li><strong>Daily Challenge Loop</strong>: Players evaluate 10 curated local classified listings to guess whether they are offered for free or require payment.</li>
+            <li><strong>Interactive Gesture Controls</strong>: Features tactile card-dragging controls for fast-paced decision making.</li>
+            <li><strong>Global Score Distribution</strong>: Automatically aggregates and displays real-time score statistics from all players in an interactive chart.</li>
+            <li><strong>Streak Retention Mechanics</strong>: Tracks consecutive days played to encourage daily player engagement.</li>
+            <li><strong>Anonymous Authentication</strong>: Utilizes silent account creation to sync personal histories and stats securely without a sign-up form.</li>
+            <li><strong>Lockout and Rollover Control</strong>: Restricts players to one game per calendar day, resetting automatically at midnight.</li>
+            <li><strong>Local State Preservation</strong>: Auto-saves current game progress to local storage, allowing seamless resume if the page is reloaded mid-game.</li>
+            <li><strong>Automated Content Ingestion</strong>: Employs an ingestion script to scrape, filter out spam, and schedule daily puzzle decks.</li>
+          </ul>
+        </div>
+        <div id="screenshots-section" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <img src="/screenshot-start.png" alt="Freejiji Start Screen" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 15px; display: block;">
+          <img src="/screenshot-game.png" alt="Freejiji Gameplay" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 15px; display: block;">
+          <img src="/screenshot-recap.png" alt="Freejiji Score Distribution & Recap" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 15px; display: block;">
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-content-btn" onclick="toggleContentType()">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-link" onclick="toggleDetails(false)">[less]</a>
       </div>
     </dd>
   </dl>
 
   <script>
-    function toggleDetails() {
+    function toggleDetails(show) {
       const details = document.getElementById('details-section');
       const link = document.getElementById('more-link');
-      if (details.style.display === 'none') {
+      if (show) {
         details.style.display = 'block';
         link.style.display = 'none';
       } else {
         details.style.display = 'none';
         link.style.display = 'inline';
+        // Reset to description view on collapse
+        document.getElementById('bullet-points-section').style.display = 'block';
+        document.getElementById('screenshots-section').style.display = 'none';
+        document.getElementById('toggle-content-btn').textContent = '[screenshots]';
+      }
+    }
+
+    function toggleContentType() {
+      const bulletPoints = document.getElementById('bullet-points-section');
+      const screenshots = document.getElementById('screenshots-section');
+      const btn = document.getElementById('toggle-content-btn');
+
+      if (bulletPoints.style.display !== 'none') {
+        bulletPoints.style.display = 'none';
+        screenshots.style.display = 'block';
+        btn.textContent = '[description]';
+      } else {
+        bulletPoints.style.display = 'block';
+        screenshots.style.display = 'none';
+        btn.textContent = '[screenshots]';
       }
     }
   </script>
