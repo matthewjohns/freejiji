@@ -330,6 +330,20 @@ function App() {
                   </button>
                 )}
               </div>
+
+              {gameDate && (
+                <p className="text-sm tracking-[2px] uppercase text-white/40 font-bold">
+                  {(() => {
+                    const [year, month, day] = gameDate.split('-');
+                    const date = new Date(Number(year), Number(month) - 1, Number(day));
+                    return date.toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    }).toUpperCase();
+                  })()}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -372,6 +386,7 @@ function App() {
             statsLoading={statsLoading}
             globalScoreDistribution={localGlobalDist}
             onRestart={startGame}
+            gameDate={gameDate}
             onResetStats={async () => {
               const ok = await resetStats(gameDate);
               if (ok) {

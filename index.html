@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lasermammoth</title>
+  <title>lasermammoth</title>
   <style>
     body {
       font-family: "Times New Roman", Times, Georgia, serif;
@@ -36,7 +36,7 @@
       margin-top: 1em;
     }
     dd {
-      margin-left: 40px; /* Classic browser indent */
+      margin-left: 40px;
       margin-top: 0.2em;
     }
     a {
@@ -52,72 +52,276 @@
   </style>
 </head>
 <body>
-  <h1>Lasermammoth</h1>
-  
-  <p>aka Matthew Johns - Game Design - <a href="mailto:lasermammoth@gmail.com">lasermammoth@gmail.com</a></p>
+  <h1>lasermammoth</h1>
+
+  <p>🇨🇦 Matthew Johns - Game Design - <a href="mailto:lasermammoth@gmail.com">lasermammoth@gmail.com</a></p>
 
   <h2>Projects</h2>
 
   <dl>
+
+    <!-- Freejiji -->
     <dt><a href="/freejiji/">Freejiji</a> (June 2026)</dt>
     <dd>
       Swipe to discern between free and paid online classified listings.
       <br>
-      <a href="javascript:void(0)" id="more-link" onclick="toggleDetails(true)">[more]</a>
-      <div id="details-section" style="display: none; margin-top: 10px;">
-        <div id="bullet-points-section">
+      <a href="javascript:void(0)" id="more-freejiji" onclick="toggleDetails('freejiji', true)">[more]</a>
+      <div id="details-freejiji" style="display: none; margin-top: 10px;">
+        <div id="bullets-freejiji">
           <ul>
-            <li><strong>Daily Challenge Loop</strong>: Players evaluate 10 curated local classified listings to guess whether they are offered for free or require payment.</li>
-            <li><strong>Interactive Gesture Controls</strong>: Features tactile card-dragging controls for fast-paced decision making.</li>
-            <li><strong>Global Score Distribution</strong>: Automatically aggregates and displays real-time score statistics from all players in an interactive chart.</li>
-            <li><strong>Streak Retention Mechanics</strong>: Tracks consecutive days played to encourage daily player engagement.</li>
-            <li><strong>Anonymous Authentication</strong>: Utilizes silent account creation to sync personal histories and stats securely without a sign-up form.</li>
-            <li><strong>Lockout and Rollover Control</strong>: Restricts players to one game per calendar day, resetting automatically at midnight.</li>
-            <li><strong>Local State Preservation</strong>: Auto-saves current game progress to local storage, allowing seamless resume if the page is reloaded mid-game.</li>
-            <li><strong>Automated Content Ingestion</strong>: Employs an ingestion script to scrape, filter out spam, and schedule daily puzzle decks.</li>
+            <li><strong>Daily Challenge Loop</strong>: Players evaluate 10 curated local classified listings per day, guessing whether each item is free or paid — a one-session-per-day format that creates appointment gaming.</li>
+            <li><strong>Swipe Gesture Controls</strong>: Tactile card-dragging with directional physics feedback; swipe right for free, left for paid, using velocity thresholding to distinguish deliberate swipes from accidental drags.</li>
+            <li><strong>Global Score Distribution Chart</strong>: Aggregates real-time scores from all players into a histogram rendered on the game-over screen, giving each player context for where their result sits in the global population.</li>
+            <li><strong>Streak Retention System</strong>: Consecutive-day streaks are tracked per player and surfaced on the game-over screen, with milestone events sent to analytics to measure engagement cliffs.</li>
+            <li><strong>Anonymous Auth + Cloud Sync</strong>: Firebase Anonymous Authentication silently assigns each browser session a persistent UID, enabling server-side stat aggregation without requiring sign-up friction.</li>
+            <li><strong>Mid-Session Persistence</strong>: In-progress game state is written to localStorage on every card swipe, allowing seamless resume after a page reload or accidental tab close.</li>
+            <li><strong>Automated Content Pipeline</strong>: A Node.js ingestion script scrapes, deduplicates, and schedules daily puzzle decks, with spam-filtering heuristics to remove low-quality or adult listings before publication.</li>
+            <li><strong>Vercel Analytics Integration</strong>: Custom events track game_started, game_completed, share_clicked, listing_clicked, and streak_milestone — each with strict once-per-day deduplication logic to prevent inflation.</li>
           </ul>
         </div>
-        <div id="screenshots-section" style="display: none; margin-top: 10px; margin-bottom: 15px;">
-          <img src="/freejiji/assets/screenshot-start.png" alt="Freejiji Start Screen" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 15px; display: block;">
-          <img src="/freejiji/assets/screenshot-game.png" alt="Freejiji Gameplay" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 15px; display: block;">
-          <img src="/freejiji/assets/screenshot-recap.png" alt="Freejiji Score Distribution & Recap" style="max-width: 320px; width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 15px; display: block;">
+        <div id="screenshots-freejiji" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="/assets/screenshot-start.png" alt="Freejiji Start Screen" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+            <img src="/assets/screenshot-game.png" alt="Freejiji Gameplay" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+            <img src="/assets/screenshot-recap.png" alt="Freejiji Score Distribution & Recap" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
         </div>
         <div style="margin-top: 15px; margin-bottom: 5px;">
-          <a href="javascript:void(0)" id="toggle-content-btn" onclick="toggleContentType()">[screenshots]</a>
+          <a href="javascript:void(0)" id="toggle-freejiji" onclick="toggleContentType('freejiji')">[screenshots]</a>
         </div>
-        <a href="javascript:void(0)" id="less-link" onclick="toggleDetails(false)">[less]</a>
+        <a href="javascript:void(0)" id="less-freejiji" onclick="toggleDetails('freejiji', false)">[less]</a>
       </div>
     </dd>
+
+    <!-- Tryplane -->
+    <dt><a href="https://lasermammoth.itch.io/tryplane">Tryplane</a> (June 2026)</dt>
+    <dd>
+      WWI dogfights and dive bombs.
+      <br>
+      <a href="javascript:void(0)" id="more-tryplane" onclick="toggleDetails('tryplane', true)">[more]</a>
+      <div id="details-tryplane" style="display: none; margin-top: 10px;">
+        <div id="bullets-tryplane">
+          <ul>
+            <li><strong>Aerodynamics Model</strong>: Full 3D flight physics with lift coefficient, drag, stall speed, throttle ramping, and independent pitch/roll/yaw rates — all exposed as Inspector-tweakable variables for rapid feel iteration without recompiling.</li>
+            <li><strong>Dual Weapon System</strong>: Machine guns use burst-fire with a 110ms cooldown and alternating muzzle flash lights; bombs alternate between two wing hardpoints with separate reload timers, requiring deliberate weapon-mode switching to manage both threats.</li>
+            <li><strong>Procedural Terrain</strong>: A 12km × 12km world is generated at runtime from a 210×210 vertex grid with seven height-based biomes — water, beach, grass, farmland (4 crop variants), mountain, and snowcap — plus winding asphalt highways and dirt road grids painted via vertex color.</li>
+            <li><strong>Enemy AI</strong>: Enemy planes use lead-prediction aiming, burst fire patterns, and a health bar rendered through a SubViewport → billboard Sprite3D — keeping overhead low while supporting full 2D UI art in 3D world space.</li>
+            <li><strong>Three Camera Modes</strong>: Chase cam, cockpit view, and gun-sight mode are switchable in flight; on death the camera detaches and holds position, giving a cinematic view of the wreckage.</li>
+          </ul>
+        </div>
+        <div id="screenshots-tryplane" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1hZ2UvNDY2MzQ3Mi8yNzc5MDg5My5wbmc=/347x500/epRJxQ.png" alt="Tryplane screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+            <img src="https://img.itch.zone/aW1hZ2UvNDY2MzQ3Mi8yNzc5MDg5NS5wbmc=/347x500/jAoCgc.png" alt="Tryplane screenshot 2" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-tryplane" onclick="toggleContentType('tryplane')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-tryplane" onclick="toggleDetails('tryplane', false)">[less]</a>
+      </div>
+    </dd>
+
+    <!-- Fireworks Fever -->
+    <dt><a href="https://lasermammoth.itch.io/fireworks-fever">Fireworks Fever</a> (June 2026)</dt>
+    <dd>
+      Remake of Rocket Mania aligned vertically.
+      <br>
+      <a href="javascript:void(0)" id="more-fireworks-fever" onclick="toggleDetails('fireworks-fever', true)">[more]</a>
+      <div id="details-fireworks-fever" style="display: none; margin-top: 10px;">
+        <div id="bullets-fireworks-fever">
+          <ul>
+            <li><strong>Fuse Routing Mechanic</strong>: Players rotate pipe-style tiles (I, L, T, X, S) on a grid to connect a continuous fuse path from ignition source to rockets — a portrait-oriented interpretation of the classic Rocket Mania formula with interruptible ignition propagation.</li>
+            <li><strong>30-Level Campaign</strong>: Hand-crafted difficulty curve grows the play grid from 3×3 to 8×8 across 30 levels, with each level specifying its own column count, row count, time limit, score target, allowed piece types, and coin drop rate as a data-driven config table.</li>
+            <li><strong>Weighted Tile Spawning</strong>: Each level defines a spawn_weights dictionary (I/L/T/X/S → float) that shifts piece distribution from easy straight-and-corner pieces at early levels toward harder junction tiles at high levels, controlling difficulty without changing the core rules.</li>
+            <li><strong>Rocket Upgrade Economy</strong>: A coin economy funds per-row rocket upgrades tracked in a shared GameState; upgrades affect visual rocket tier and scoring multipliers, creating a secondary optimization layer beyond puzzle solving.</li>
+            <li><strong>Procedural Rocket Drawing</strong>: Rockets are drawn entirely via Canvas draw calls (no sprite sheets), with tween-based flicker animation during ignition and a launch arc tween on fire — keeping asset count low while remaining visually expressive.</li>
+          </ul>
+        </div>
+        <div id="screenshots-fireworks-fever" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1nLzI3Njc3NjU2LnBuZw==/347x500/ck%2BR5R.png" alt="Fireworks Fever screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-fireworks-fever" onclick="toggleContentType('fireworks-fever')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-fireworks-fever" onclick="toggleDetails('fireworks-fever', false)">[less]</a>
+      </div>
+    </dd>
+
+    <!-- Really Rally -->
+    <dt><a href="https://lasermammoth.itch.io/really-rally">Really Rally</a> (June 2026)</dt>
+    <dd>
+      Arcade rally racing on tracks generated from real world maps.
+      <br>
+      <a href="javascript:void(0)" id="more-really-rally" onclick="toggleDetails('really-rally', true)">[more]</a>
+      <div id="details-really-rally" style="display: none; margin-top: 10px;">
+        <div id="bullets-really-rally">
+          <ul>
+            <li><strong>Real-World Stage Import</strong>: A GPX importer parses GPS trace files (lat/lon/elevation) using equirectangular projection to convert real rally stage routes into 3D Godot spline paths — stages include actual race locations such as Monaco and Col de Turini.</li>
+            <li><strong>Streaming Procedural Track</strong>: Infinite track generation keeps only 5 road segments (each 160m) in memory at once; a macroscopic zone bias system schedules long straights and dramatic hairpin corners to give each run a coherent rhythm without pre-authored layouts.</li>
+            <li><strong>Destructible Scenery</strong>: Roadside fences are individually destructible with debris geometry and separate physics lifecycle, rewarding aggressive driving lines while keeping the environment interactive.</li>
+            <li><strong>@tool Editor Integration</strong>: The track generator runs as an @tool script in the Godot editor, enabling designers to load, rebuild, and preview any rally stage without entering Play mode — shortening the track-authoring iteration loop.</li>
+            <li><strong>Checkpoint System</strong>: An active checkpoint dictionary tracks clean vs. dirty passes per checkpoint ID, enabling sector-time penalties and providing the data needed for fair time comparisons across different racing lines.</li>
+          </ul>
+        </div>
+        <div id="screenshots-really-rally" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1hZ2UvNDYyNTQwNy8yNzU3MTc3My5wbmc=/347x500/0Ck4kb.png" alt="Really Rally screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+            <img src="https://img.itch.zone/aW1hZ2UvNDYyNTQwNy8yNzY1NjgxMi5wbmc=/347x500/j59quQ.png" alt="Really Rally screenshot 2" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+            <img src="https://img.itch.zone/aW1hZ2UvNDYyNTQwNy8yNzU3NDkzNi5wbmc=/347x500/RUkAxm.png" alt="Really Rally screenshot 3" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-really-rally" onclick="toggleContentType('really-rally')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-really-rally" onclick="toggleDetails('really-rally', false)">[less]</a>
+      </div>
+    </dd>
+
+    <!-- MergeSpell -->
+    <dt><a href="https://lasermammoth.itch.io/mergespell">MergeSpell</a> (May 2026)</dt>
+    <dd>
+      Word making game with letter merging mechanics.
+      <br>
+      <a href="javascript:void(0)" id="more-mergespell" onclick="toggleDetails('mergespell', true)">[more]</a>
+      <div id="details-mergespell" style="display: none; margin-top: 10px;">
+        <div id="bullets-mergespell">
+          <ul>
+            <li><strong>Hex Grid Letter Chain</strong>: Players drag across adjacent hexagonal tiles to chain letters; completing a valid word promotes each tile's letter up a defined hierarchy, rewarding planning several moves ahead rather than pure word knowledge.</li>
+            <li><strong>Dual Mode Architecture</strong>: Daily Hex and Practice modes run as two fully isolated save contexts inside a single ScoreManager — players switch mid-session without losing progress in either mode, with all state serialized to a local JSON save file.</li>
+            <li><strong>Date-Seeded Daily Puzzle</strong>: The daily board uses a date string hash as its RNG seed, ensuring every player receives an identical starting layout while Practice mode uses a fresh random seed per session — the same grid logic serves both without branching code.</li>
+            <li><strong>Booster and Multiplier System</strong>: Per-cell multipliers and bonus tiles modify score calculations, adding a spatial dimension to word selection beyond letter value — high-value chains require routing through bonus cells as well as forming valid words.</li>
+            <li><strong>Pre-processed Dictionary</strong>: A Python script (filter_words.py) strips the word list of profanity and low-frequency entries before shipping, keeping the dictionary.gd lightweight and the in-game validation fast.</li>
+          </ul>
+        </div>
+        <div id="screenshots-mergespell" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1nLzI3MjQyOTI4LnBuZw==/347x500/lK1HPR.png" alt="MergeSpell screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-mergespell" onclick="toggleContentType('mergespell')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-mergespell" onclick="toggleDetails('mergespell', false)">[less]</a>
+      </div>
+    </dd>
+
+    <!-- Traffickle -->
+    <dt><a href="https://lasermammoth.itch.io/traffickle">Traffickle</a> (May 2026)</dt>
+    <dd>
+      Traffic management sim and road maintenance sim.
+      <br>
+      <a href="javascript:void(0)" id="more-traffickle" onclick="toggleDetails('traffickle', true)">[more]</a>
+      <div id="details-traffickle" style="display: none; margin-top: 10px;">
+        <div id="bullets-traffickle">
+          <ul>
+            <li><strong>Procedural City Generation</strong>: An organic road network of up to 3,500 branches is generated at runtime using a distance-weighted sprawl system — branch probability tapers from the city center outward, with a separate commercial core radius creating realistic density gradients without hand-authored layouts.</li>
+            <li><strong>Road Degradation Shader</strong>: Road surfaces use a custom GLSL fragment shader with Fractal Brownian Motion to render evolving crack patterns tied to a durability float uniform — roads visually decay from solid asphalt through cracking and grass intrusion, turning orange during repair.</li>
+            <li><strong>AStar3D Pathfinding</strong>: Up to 1,500 simulated inhabitants route between procedurally zoned residential and commercial nodes via AStar3D, with a distance-computation pass run at generation time to pre-build the routing graph.</li>
+            <li><strong>Roundabout Placement</strong>: Players can upgrade any intersection to a roundabout via a confirmation-gated UI flow; roundabouts modify the local routing mesh and are tracked in a dictionary for downstream traffic simulation queries.</li>
+            <li><strong>Progressive City Reveal</strong>: The city is revealed outward from the center using a distance-sorted activation system, creating a fog-of-war expansion feel at game start without a separate visibility layer.</li>
+          </ul>
+        </div>
+        <div id="screenshots-traffickle" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1nLzI2NjM4NDQ3LnBuZw==/347x500/C1QRZa.png" alt="Traffickle screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-traffickle" onclick="toggleContentType('traffickle')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-traffickle" onclick="toggleDetails('traffickle', false)">[less]</a>
+      </div>
+    </dd>
+
+    <!-- Landerlivery -->
+    <dt><a href="https://lasermammoth.itch.io/landerlivery">Landerlivery</a> (April 2026)</dt>
+    <dd>
+      Lunar Lander inspired delivery game, landing on moons and planets.
+      <br>
+      <a href="javascript:void(0)" id="more-landerlivery" onclick="toggleDetails('landerlivery', true)">[more]</a>
+      <div id="details-landerlivery" style="display: none; margin-top: 10px;">
+        <div id="bullets-landerlivery">
+          <ul>
+            <li><strong>Multi-Axis Landing Grading</strong>: Each landing is evaluated simultaneously across approach speed, body angle, and trajectory angle — the three penalties are combined with a power-curve blend to produce five grades (Excellent / Good / Okay / So-So / Rough) with live numerical readout, giving players precise feedback on what to correct.</li>
+            <li><strong>Emergency Retro-Thruster</strong>: A three-level emergency system auto-rotates the lander to retrograde heading and fires at 3×/4×/5× thrust when triggered at high speed — a skill-based safety net that burns extra fuel, creating a meaningful trade-off.</li>
+            <li><strong>Magnetic Gear Joint</strong>: Landing on a rotating or orbiting celestial body creates a runtime PinJoint2D between the lander and the body, correctly inheriting surface velocity so the lander sits stable on moving terrain without physics drift.</li>
+            <li><strong>Procedural Pilot Identity</strong>: Each player is assigned a callsign generated from a curated adjective + noun word list (~2,000 combinations) on first launch, providing a personal identity for score sharing without requiring account creation.</li>
+            <li><strong>Delivery Economy</strong>: Payouts scale with route distance minus fuel cost, creating a natural tension between conservative fuel-efficient landings and faster but costlier approaches — driving repeated play as players optimise each route.</li>
+          </ul>
+        </div>
+        <div id="screenshots-landerlivery" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1nLzI2MjQxNjM2LnBuZw==/347x500/%2BS5z%2Bu.png" alt="Landerlivery screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-landerlivery" onclick="toggleContentType('landerlivery')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-landerlivery" onclick="toggleDetails('landerlivery', false)">[less]</a>
+      </div>
+    </dd>
+
+    <!-- Herdr -->
+    <dt><a href="https://lasermammoth.itch.io/herdr">Herdr</a> (March 2026)</dt>
+    <dd>
+      Sheep herding in the style of Atari 2600.
+      <br>
+      <a href="javascript:void(0)" id="more-herdr" onclick="toggleDetails('herdr', true)">[more]</a>
+      <div id="details-herdr" style="display: none; margin-top: 10px;">
+        <div id="bullets-herdr">
+          <ul>
+            <li><strong>Boid-Style Sheep AI</strong>: Each sheep combines three steering forces — a 90-degree forward cone that funnels the flock toward a focal point ahead of the dog, radial scatter when approached from the side, and FBM wander during idle — all exposed as Inspector-tweakable floats to dial herd responsiveness without code changes.</li>
+            <li><strong>Hazard Penalty Design</strong>: A gorge at the edge of each level deducts 5 seconds per sheep lost rather than ending the run, punishing sloppy herding proportionally and keeping all skill levels in play until the final sheep is corralled.</li>
+            <li><strong>Cumulative Multi-Level Scoring</strong>: Run times accumulate across three levels via a Global singleton; levels are chained by assigning a PackedScene reference in the Inspector, keeping level sequencing entirely data-driven and easy to reorder.</li>
+            <li><strong>Cross-Platform Share</strong>: The end-screen share button calls the Web Share API via JavaScriptBridge.eval() with a user-agent mobile/desktop branch — mobile devices open the native share sheet while desktop silently copies to clipboard, with no platform-specific code paths in GDScript.</li>
+            <li><strong>Web Audio Pre-Warming</strong>: The gorge reverb bus is played at -80dB during scene load to force the browser to initialise the audio graph before first player input, preventing the well-known first-play audio latency issue in HTML5 Godot exports.</li>
+          </ul>
+        </div>
+        <div id="screenshots-herdr" style="display: none; margin-top: 10px; margin-bottom: 15px;">
+          <div style="display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap;">
+            <img src="https://img.itch.zone/aW1nLzI1ODU4MDkxLnBuZw==/347x500/E4EPBU.png" alt="Herdr screenshot 1" style="max-width: 160px; width: 100%; height: auto; border: 1px solid #ccc;">
+          </div>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+          <a href="javascript:void(0)" id="toggle-herdr" onclick="toggleContentType('herdr')">[screenshots]</a>
+        </div>
+        <a href="javascript:void(0)" id="less-herdr" onclick="toggleDetails('herdr', false)">[less]</a>
+      </div>
+    </dd>
+
   </dl>
 
   <script>
-    function toggleDetails(show) {
-      const details = document.getElementById('details-section');
-      const link = document.getElementById('more-link');
+    function toggleDetails(slug, show) {
+      const details = document.getElementById('details-' + slug);
+      const more = document.getElementById('more-' + slug);
       if (show) {
         details.style.display = 'block';
-        link.style.display = 'none';
+        more.style.display = 'none';
       } else {
         details.style.display = 'none';
-        link.style.display = 'inline';
+        more.style.display = 'inline';
         // Reset to description view on collapse
-        document.getElementById('bullet-points-section').style.display = 'block';
-        document.getElementById('screenshots-section').style.display = 'none';
-        document.getElementById('toggle-content-btn').textContent = '[screenshots]';
+        document.getElementById('bullets-' + slug).style.display = 'block';
+        document.getElementById('screenshots-' + slug).style.display = 'none';
+        document.getElementById('toggle-' + slug).textContent = '[screenshots]';
       }
     }
 
-    function toggleContentType() {
-      const bulletPoints = document.getElementById('bullet-points-section');
-      const screenshots = document.getElementById('screenshots-section');
-      const btn = document.getElementById('toggle-content-btn');
+    function toggleContentType(slug) {
+      const bullets = document.getElementById('bullets-' + slug);
+      const screenshots = document.getElementById('screenshots-' + slug);
+      const btn = document.getElementById('toggle-' + slug);
 
-      if (bulletPoints.style.display !== 'none') {
-        bulletPoints.style.display = 'none';
+      if (bullets.style.display !== 'none') {
+        bullets.style.display = 'none';
         screenshots.style.display = 'block';
         btn.textContent = '[description]';
       } else {
-        bulletPoints.style.display = 'block';
+        bullets.style.display = 'block';
         screenshots.style.display = 'none';
         btn.textContent = '[screenshots]';
       }

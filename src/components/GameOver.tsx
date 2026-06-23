@@ -15,7 +15,19 @@ interface GameOverProps {
   globalScoreDistribution: { [key: number]: number } | null;
   onRestart: () => void;
   onResetStats?: () => void;
+  gameDate?: string;
 }
+
+const formatPuzzleDate = (dateStr: string | undefined): string => {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
 
 const GOD_MESSAGES = [
   "Ladies and gentlemen, behold your new god.",
@@ -70,6 +82,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   statsLoading,
   globalScoreDistribution,
   onResetStats,
+  gameDate,
 }) => {
   const totalItems = items.length;
   const [copied, setCopied] = useState(false);
@@ -107,6 +120,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   }, [score, totalItems]);
 
   const percentage = (score / totalItems) * 100;
+  const avgScore = stats && stats.gamesPlayed > 0 ? (stats.allTimeScore / stats.gamesPlayed).toFixed(1) : '0';
 
   const shareScore = () => {
     trackShareClicked();
@@ -125,12 +139,11 @@ export const GameOver: React.FC<GameOverProps> = ({
       .map((guess) => (guess === true ? '✅' : '❌'))
       .join(' ');
 
-    let streakText = '';
-    if (stats && stats.currentStreak > 0) {
-      streakText = `\nStreak: 🔥 ${stats.currentStreak} Days (Max: ⚡️ ${stats.maxStreak})`;
-    }
+    const dateText = gameDate ? `\n${formatPuzzleDate(gameDate)}` : '';
+    const averageText = stats ? `\nAverage: ${avgScore}` : '';
+    const streakText = stats ? `\nStreak: 🔥 ${stats.currentStreak}` : '';
 
-    const shareMessage = `${performanceText}\nScore: ${score}/${totalItems}${streakText}\n${emojiSequence}\n\nPlay here: ${window.location.href}`;
+    const shareMessage = `${performanceText}${dateText}\n${emojiSequence}${averageText}${streakText}\nhttps://lasermammoth.ca/freejiji`;
 
     navigator.clipboard.writeText(shareMessage).then(() => {
       setCopied(true);
@@ -180,8 +193,6 @@ export const GameOver: React.FC<GameOverProps> = ({
   const distribution = stats?.scoreDistribution || {
     0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
   };
-
-  const avgScore = stats && stats.gamesPlayed > 0 ? (stats.allTimeScore / stats.gamesPlayed).toFixed(1) : '0';
 
   const totalGamesInDist = Object.values(distribution).reduce((a, b) => a + b, 0);
   const divisor = totalGamesInDist > 0 ? totalGamesInDist : 1;
