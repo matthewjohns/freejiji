@@ -1,0 +1,583 @@
+/* Guitooner Stylesheet - Premium Dark Glassmorphic Design */
+
+:root {
+  --bg-primary: #0a0d14;
+  --card-bg: rgba(16, 20, 35, 0.65);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-main: #f3f4f6;
+  --text-muted: #8e9aaf;
+  
+  /* Tuning Status Accents */
+  --color-flat: #00d2ff;
+  --color-sharp: #ff2a5f;
+  --color-in-tune: #00f097;
+  --color-default: #707e94;
+  
+  /* Current active color state, updated dynamically via JS if needed, default is default */
+  --current-accent: var(--color-default);
+  --current-glow: rgba(112, 126, 148, 0.3);
+  
+  /* Fonts */
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-ui: 'Outfit', sans-serif;
+  --font-digital: 'Orbitron', monospace;
+}
+
+/* Reset and Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  position: relative;
+  padding: 20px;
+}
+
+/* Ambient glow blobs in the background */
+.background-glows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+}
+
+.glow-1 {
+  background: radial-gradient(circle, #00f097 0%, transparent 70%);
+  top: -10%;
+  left: -10%;
+}
+
+.glow-2 {
+  background: radial-gradient(circle, #00d2ff 0%, transparent 70%);
+  bottom: -10%;
+  right: -10%;
+}
+
+/* Layout container */
+.app-container {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.logo-text {
+  font-family: var(--font-ui);
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.logo-text .highlight {
+  background: linear-gradient(90deg, var(--color-flat), var(--color-in-tune));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tagline {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+/* Card layout with Glassmorphism */
+.tuner-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.tuner-card.active-tuning {
+  border-color: rgba(var(--current-glow), 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 
+              0 0 30px var(--current-glow),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Mode Selector Switch */
+.mode-selector {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.mode-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-btn:hover {
+  color: #fff;
+}
+
+.mode-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Tuner Gauge Display */
+.tuner-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.gauge-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: auto;
+}
+
+.gauge-arc-bg {
+  stroke: rgba(255, 255, 255, 0.05);
+}
+
+.gauge-arc-target {
+  stroke: var(--color-in-tune);
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.active-tuning .gauge-arc-target {
+  opacity: 0.7;
+}
+
+#needle-group {
+  transform-origin: 100px 100px;
+  transition: transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1.15);
+}
+
+.gauge-needle {
+  stroke: var(--current-accent);
+  filter: drop-shadow(0 0 4px var(--current-accent));
+  transition: stroke 0.3s ease;
+}
+
+.gauge-center {
+  fill: #161c2c;
+  stroke: var(--current-accent);
+  stroke-width: 2;
+  transition: stroke 0.3s ease;
+}
+
+/* Digital Note Output Middle Column */
+.note-display-center {
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.note-letter-meta {
+  font-family: var(--font-digital);
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--current-accent);
+  text-shadow: 0 0 15px var(--current-glow);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+  margin-top: 4px;
+}
+
+.tuner-meta {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 15px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.meta-value {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  transition: color 0.3s ease;
+}
+
+.meta-value.status-flat {
+  color: var(--color-flat);
+}
+
+.meta-value.status-sharp {
+  color: var(--color-sharp);
+}
+
+.meta-value.status-in-tune {
+  color: var(--color-in-tune);
+}
+
+/* Fretboard Strings Panel */
+.fretboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-instruction {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.fretboard {
+  background: linear-gradient(180deg, #181d2a 0%, #0e121e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Simulated wood/metal fret marker */
+.fretboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.fretboard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 20%;
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.guitar-layout {
+  height: 180px;
+}
+
+.bass-layout {
+  height: 140px;
+}
+
+/* Indivdual String Wrapper */
+.string-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 24px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Note button badge */
+.string-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-right: 15px;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.string-row:hover .string-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.string-row.active .string-badge {
+  background: var(--current-accent);
+  color: #0b0f19;
+  border-color: var(--current-accent);
+  box-shadow: 0 0 10px var(--current-glow);
+}
+
+/* Visual Line representing the Guitar/Bass string */
+.string-line {
+  flex: 1;
+  height: 2px; /* Set dynamically */
+  background: linear-gradient(90deg, #515e75 0%, #8598b0 50%, #515e75 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  position: relative;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.string-row.active .string-line {
+  background: linear-gradient(90deg, var(--current-accent) 0%, #fff 50%, var(--current-accent) 100%);
+  box-shadow: 0 0 8px var(--current-glow);
+}
+
+/* Animation for pluck vibration */
+@keyframes string-vibrate {
+  0% { transform: translateY(0); }
+  10% { transform: translateY(-3px); }
+  20% { transform: translateY(2.5px); }
+  30% { transform: translateY(-2px); }
+  40% { transform: translateY(1.5px); }
+  50% { transform: translateY(-1px); }
+  65% { transform: translateY(0.5px); }
+  80% { transform: translateY(-0.3px); }
+  100% { transform: translateY(0); }
+}
+
+.string-row.plucked .string-line {
+  animation: string-vibrate 0.4s ease-out;
+}
+
+/* Fretboard Control Buttons */
+.fretboard-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.control-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.control-btn.active {
+  background: rgba(0, 240, 151, 0.1);
+  border-color: rgba(0, 240, 151, 0.3);
+  color: var(--color-in-tune);
+  box-shadow: 0 0 10px rgba(0, 240, 151, 0.05);
+}
+
+/* Oscilloscope Visualizer */
+.visualizer-container {
+  width: 100%;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#canvas-visualizer {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Action button for Mic authorization */
+.action-container {
+  display: flex;
+  justify-content: center;
+}
+
+.primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #00f097 0%, #00d2ff 100%);
+  border: none;
+  border-radius: 14px;
+  color: #0b0f19;
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 14px 28px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 240, 151, 0.35);
+}
+
+.primary-btn:active {
+  transform: translateY(1px);
+}
+
+.pulse-glow {
+  animation: pulse-glow-anim 2s infinite;
+}
+
+@keyframes pulse-glow-anim {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 240, 151, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(0, 240, 151, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 240, 151, 0);
+  }
+}
+
+.primary-btn.connected {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  cursor: default;
+  animation: none;
+}
+
+.primary-btn.connected:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Footer styling */
+footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 10px 0;
+}
+
+footer a {
+  color: var(--color-flat);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+footer a:hover {
+  color: var(--color-in-tune);
+  text-decoration: underline;
+}
+
+/* Mobile Responsiveness tweaks */
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+  
+  .tuner-card {
+    padding: 18px;
+    gap: 18px;
+    border-radius: 20px;
+  }
+  
+  .note-letter-meta {
+    font-size: 1.8rem;
+  }
+  
+  .guitar-layout {
+    height: 160px;
+  }
+
+  .bass-layout {
+    height: 120px;
+  }
+  
+  .string-badge {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+    margin-right: 10px;
+  }
+}

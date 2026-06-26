@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guitooner | Guitar & Bass Tuner</title>
+  <meta name="description" content="A premium browser-based guitar and bass tuner. Pitch-perfect detection and real-time frequency analysis.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Orbitron:wght@500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background-glows">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+  </div>
+
+  <div class="app-container">
+    <header>
+      <h1 class="logo-text">GUIT<span class="highlight">OO</span>NER</h1>
+      <p class="tagline">Pitch-perfect guitar & bass tuner</p>
+    </header>
+
+    <main class="tuner-card glass">
+      <!-- Instrument Mode Toggle -->
+      <section class="mode-selector">
+        <button id="btn-guitar" class="mode-btn active" aria-label="Switch to Guitar Mode">Guitar</button>
+        <button id="btn-bass" class="mode-btn" aria-label="Switch to Bass Mode">Bass</button>
+      </section>
+
+      <!-- Tuner Visual Display -->
+      <section class="tuner-display">
+        <!-- SVG Gauge -->
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background Arc -->
+            <path class="gauge-arc-bg" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke-width="6" stroke-linecap="round" />
+            <!-- In-tune Target Zone Arc -->
+            <path class="gauge-arc-target" d="M90,21 A80,80 0 0,1 110,21" fill="none" stroke-width="8" stroke-linecap="round" />
+            <!-- Needle -->
+            <g id="needle-group">
+              <line class="gauge-needle" x1="100" y1="100" x2="100" y2="25" stroke-width="3" stroke-linecap="round" />
+              <circle class="gauge-center" cx="100" cy="100" r="10" />
+            </g>
+          </svg>
+          
+        </div>
+
+        <div class="tuner-meta">
+          <div class="meta-item">
+            <span class="meta-label">Tuning Status</span>
+            <span id="tuning-status" class="meta-value text-muted">Awaiting Audio</span>
+          </div>
+          <div class="meta-item note-display-center">
+            <span class="meta-label">Note</span>
+            <span id="note-letter" class="note-letter-meta">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Deviation</span>
+            <span id="tuning-cents-val" class="meta-value text-muted">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fretboard / String Interaction Panel -->
+      <section class="fretboard-container">
+        <p class="section-instruction">Tap a string to play reference pitch or select target string manually</p>
+        <div id="fretboard" class="fretboard guitar-layout">
+          <!-- Strings will be rendered dynamically by JavaScript -->
+        </div>
+        <div class="fretboard-controls">
+          <button id="btn-auto-string" class="control-btn active">Auto-Detect String</button>
+        </div>
+      </section>
+
+      <!-- Real-time Oscilloscope -->
+      <section class="visualizer-container">
+        <canvas id="canvas-visualizer" width="500" height="60" aria-label="Real-time audio waveform visualizer"></canvas>
+      </section>
+
+      <!-- Audio Authorization / Action Button -->
+      <section class="action-container">
+        <button id="btn-audio-action" class="primary-btn pulse-glow">
+          <svg class="icon-mic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" x2="12" y1="19" y2="22"></line>
+          </svg>
+          <span>Start Tuner</span>
+        </button>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 Laser Mammoth. Host on <a href="https://lasermammoth.ca" target="_blank" rel="noopener">lasermammoth.ca</a></p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
