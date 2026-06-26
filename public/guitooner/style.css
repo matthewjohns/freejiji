@@ -1,7 +1,7 @@
 /* Guitooner Stylesheet - Premium Dark Glassmorphic Design */
 
 :root {
-  --bg-primary: #0a0d14;
+  --bg-primary: #000000;
   --card-bg: rgba(16, 20, 35, 0.65);
   --card-border: rgba(255, 255, 255, 0.08);
   --text-main: #f3f4f6;
@@ -45,6 +45,7 @@ body {
 
 /* Ambient glow blobs in the background */
 .background-glows {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -101,7 +102,7 @@ header {
 }
 
 .logo-text .highlight {
-  background: linear-gradient(90deg, var(--color-flat), var(--color-in-tune));
+  background: linear-gradient(90deg, #ff8c00, #ffc000);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -444,10 +445,10 @@ header {
 }
 
 .control-btn.active {
-  background: rgba(0, 240, 151, 0.1);
-  border-color: rgba(0, 240, 151, 0.3);
-  color: var(--color-in-tune);
-  box-shadow: 0 0 10px rgba(0, 240, 151, 0.05);
+  background: rgba(255, 140, 0, 0.1);
+  border-color: rgba(255, 140, 0, 0.35);
+  color: #ff9f1c;
+  box-shadow: 0 0 10px rgba(255, 140, 0, 0.08);
 }
 
 /* Oscilloscope Visualizer */
@@ -480,7 +481,7 @@ header {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(135deg, #00f097 0%, #00d2ff 100%);
+  background: #ff8c00; /* Solid orange, no gradient */
   border: none;
   border-radius: 14px;
   color: #0b0f19;
@@ -495,7 +496,8 @@ header {
 
 .primary-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 240, 151, 0.35);
+  background: #ff9f1c; /* Solid yellow-orange, no gradient */
+  box-shadow: 0 10px 25px rgba(255, 140, 0, 0.35);
 }
 
 .primary-btn:active {
@@ -508,13 +510,13 @@ header {
 
 @keyframes pulse-glow-anim {
   0% {
-    box-shadow: 0 0 0 0 rgba(0, 240, 151, 0.4);
+    box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(0, 240, 151, 0);
+    box-shadow: 0 0 0 12px rgba(255, 140, 0, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 240, 151, 0);
+    box-shadow: 0 0 0 0 rgba(255, 140, 0, 0);
   }
 }
 
