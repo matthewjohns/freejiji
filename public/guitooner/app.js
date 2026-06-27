@@ -254,7 +254,7 @@ async function initAudio() {
     runTunerLoop();
   } catch(err) {
     console.error('Mic access error: ', err);
-    alert(`Microphone Error: ${err.name} - ${err.message}\n\nPlease ensure both your browser and operating system (macOS) have granted microphone permissions.`);
+    alert(`Microphone Error: ${err.name} - ${err.message}\n\nPlease ensure both your browser and operating system settings have granted microphone permissions.`);
     tuningStatusVal.textContent = 'Mic Error';
   }
 }
