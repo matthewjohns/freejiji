@@ -114,6 +114,12 @@
     .approve-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,255,135,0.3); }
     .approve-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
     .approve-btn.approved { background: rgba(0,255,135,0.15); border: 1px solid rgba(0,255,135,0.3); color: #00ff87; }
+    .approve-btn.recurate {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+    }
+    .approve-btn.recurate:hover { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: #f59e0b; box-shadow: 0 0 16px rgba(245,158,11,0.2); }
 
     /* ── Item grid ── */
     .items-grid {
@@ -166,6 +172,28 @@
     }
     .price-badge.free { background: rgba(0,255,135,0.9); color: #0b090f; }
     .price-badge.paid { background: rgba(255,0,127,0.9); color: #fff; }
+
+    .dup-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: rgba(255, 170, 0, 0.9);
+      color: #0b090f;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .item-card.is-duplicate {
+      border: 1.5px solid rgba(255, 170, 0, 0.5);
+      box-shadow: 0 0 12px rgba(255, 170, 0, 0.15);
+    }
 
     .item-body { padding: 12px; }
     .item-title {
@@ -271,6 +299,328 @@
       display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Generate section ── */
+    .generate-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 36px 0 20px;
+    }
+    .generate-divider-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+    .generate-divider-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .generate-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .generate-card-info { flex: 1; min-width: 200px; }
+    .generate-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 4px;
+    }
+    .generate-card-desc {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.5;
+    }
+    .generate-btn {
+      padding: 10px 22px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+    .generate-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(245,158,11,0.35); }
+    .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .generate-log {
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .generate-log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.02);
+    }
+    .generate-log-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+    .generate-log-status {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .generate-log-output {
+      padding: 14px 16px;
+      margin: 0;
+      font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+      font-size: 0.7rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.65);
+      max-height: 340px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-stderr { color: #ff6b6b; }
+    .log-ok { color: #00ff87; }
+    .generate-log-footer {
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .generate-notice {
+      margin-top: 16px;
+      background: rgba(245,158,11,0.05);
+      border: 1px solid rgba(245,158,11,0.12);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+    }
+    .generate-notice code {
+      font-family: monospace;
+      background: rgba(255,255,255,0.07);
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: #f59e0b;
+    }
+
+    /* Swap Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-content {
+      background: #110e1b;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border-radius: 20px;
+      width: 95%;
+      max-width: 600px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: scaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-header h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .modal-close-btn:hover { color: #fff; }
+    
+    .modal-blacklist-section {
+      padding: 16px 20px;
+      background: rgba(255,0,127,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+    .modal-blacklist-section p {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      margin: 0 0 10px 0;
+    }
+    .modal-blacklist-section label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .modal-blacklist-section input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.85rem;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .modal-blacklist-section input:focus {
+      border-color: rgba(255,0,127,0.5);
+    }
+
+    .modal-pool-section {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .modal-pool-section h4 {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 10px 0;
+    }
+    .modal-pool-search {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.85rem;
+      outline: none;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .modal-pool-search:focus {
+      border-color: rgba(0,210,255,0.5);
+    }
+    .modal-pool-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+    .modal-pool-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .modal-pool-item:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .modal-pool-thumb {
+      width: 45px;
+      height: 35px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .modal-pool-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .modal-pool-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .modal-pool-meta {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .modal-pool-select-btn {
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 6px;
+      background: rgba(0,210,255,0.1);
+      color: #00d2ff;
+      border: 1px solid rgba(0,210,255,0.2);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .modal-pool-item:hover .modal-pool-select-btn {
+      background: #00d2ff;
+      color: #0b090f;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes scaleUp {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -296,6 +646,54 @@
   <div id="app" style="display:none">
     <div class="week-tabs" id="weekTabs"></div>
     <div id="dayPanels"></div>
+  </div>
+
+  <div id="generateSection" style="display:none">
+    <div class="generate-divider">
+      <div class="generate-divider-line"></div>
+      <span class="generate-divider-label">Content Pipeline</span>
+      <div class="generate-divider-line"></div>
+    </div>
+    <div class="generate-card">
+      <div class="generate-card-info">
+        <div class="generate-card-title">📅 Generate New Week</div>
+        <div class="generate-card-desc">Scrape Kijiji for the next 7 days of content. Already-approved days are always preserved.</div>
+      </div>
+      <button id="generateBtn" class="generate-btn">✨ Generate New Week</button>
+    </div>
+    <div id="generateLog" style="display:none" class="generate-log">
+      <div class="generate-log-header">
+        <span class="generate-log-title">Generation Log</span>
+        <span id="generateStatus" class="generate-log-status"><span class="spinner"></span> Running...</span>
+      </div>
+      <pre id="logOutput" class="generate-log-output"></pre>
+      <div id="generateDone" style="display:none" class="generate-log-footer">
+        <button class="approve-btn" id="reloadBtn">🔄 Reload Content</button>
+      </div>
+    </div>
+    <div id="serverNotice" style="display:none" class="generate-notice">
+      <span>💡</span>
+      <span>To enable in-browser generation, run: <code>cd scripts &amp;&amp; npm run server</code> then open <code>http://localhost:3333</code></span>
+    </div>
+  </div>
+</div>
+<!-- Swap selection modal popup overlay -->
+<div id="swapModal" class="modal-overlay" style="display: none">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="swapModalTitle">Choose Replacement Item</h3>
+      <button class="modal-close-btn" id="closeSwapModalBtn">&times;</button>
+    </div>
+    <div class="modal-blacklist-section">
+      <p>Are you swapping out <strong id="swapTargetTitle">Item</strong>?</p>
+      <label for="blacklistInput">Blacklist reason/keyword (optional):</label>
+      <input type="text" id="blacklistInput" placeholder="e.g. service, ticket, shipping" />
+    </div>
+    <div class="modal-pool-section">
+      <h4>Available Swap Pool:</h4>
+      <input type="text" id="poolSearchInput" class="modal-pool-search" placeholder="🔍 Search pool items by title..." />
+      <div id="modalPoolList" class="modal-pool-list"></div>
+    </div>
   </div>
 </div>
 
@@ -336,9 +734,44 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ── State ──
   let weekData = {}; // date → { date, items, status }
   let poolData = { freeItems: [], paidItems: [] };
+
+  // ── Event Delegation for Day Panels ──
+  document.getElementById('dayPanels').addEventListener('click', async (event) => {
+    const btn = event.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const date = btn.dataset.date;
+
+    if (action === 'swap') {
+      const idx = parseInt(btn.dataset.idx, 10);
+      await swapItem(date, idx);
+    } else if (action === 'approve') {
+      await approveDay(date);
+    } else if (action === 'recurate') {
+      await recurateDay(date);
+    }
+  });
+
+  // ── Modal logic variables ──
+  let activeSwapResolve = null; // store resolve function of the swap promise
+
+  // Close modal helper
+  function closeSwapModal() {
+    document.getElementById('swapModal').style.display = 'none';
+    if (activeSwapResolve) {
+      activeSwapResolve(null); // resolve with null to cancel
+      activeSwapResolve = null;
+    }
+  }
+
+  // Wire up close modal button & overlay clicks
+  document.getElementById('closeSwapModalBtn').addEventListener('click', closeSwapModal);
+  document.getElementById('swapModal').addEventListener('click', (e) => {
+    if (e.target.id === 'swapModal') closeSwapModal();
+  });
 
   // ── UI helpers ──
   function showToast(msg, type = 'success') {
@@ -360,10 +793,11 @@
     if (dates.length === 0) {
       document.getElementById('loading').innerHTML = `
         <div class="state-msg">
-          <div class="icon">📭</div>
+          <div class="icon">💭</div>
           <h3>No draft content found</h3>
           <p>Run <code>node scripts/generate-week.js</code> first to generate this week's content, then refresh this page.</p>
         </div>`;
+      buildGenerateSection();
       return;
     }
 
@@ -399,7 +833,22 @@
       panelsEl.appendChild(panel);
     });
 
-    attachEventListeners();
+    buildGenerateSection();
+  }
+
+  function getPreviousUseDate(listingUrl, currentDate) {
+    if (!listingUrl) return null;
+    const sortedDates = Object.keys(weekData).sort();
+    for (const date of sortedDates) {
+      if (date >= currentDate) break;
+      const day = weekData[date];
+      if (day && day.items) {
+        if (day.items.some(item => item.listingUrl === listingUrl)) {
+          return date;
+        }
+      }
+    }
+    return null;
   }
 
   function renderDayPanel(day) {
@@ -413,31 +862,48 @@
           <div class="day-title">${formatDate(day.date)}</div>
           <div class="day-meta">${day.items.length} items · ${freeCount} free · ${paidCount} paid · Status: <strong>${day.status}</strong></div>
         </div>
-        <button
-          class="approve-btn${isApproved ? ' approved' : ''}"
-          data-action="approve"
-          data-date="${day.date}"
-          ${isApproved ? 'disabled' : ''}
-        >${isApproved ? '✅ Approved' : '✅ Approve Day'}</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${isApproved ? `
+            <button class="approve-btn approved" disabled>\u2705 Approved</button>
+            <button
+              class="approve-btn recurate"
+              data-action="recurate"
+              data-date="${day.date}"
+            >🔄 Recurate</button>
+          ` : `
+            <button
+              class="approve-btn"
+              data-action="approve"
+              data-date="${day.date}"
+            >\u2705 Approve Day</button>
+          `}
+        </div>
       </div>
       <div class="items-grid">
-        ${day.items.map((item, idx) => renderItemCard(item, day.date, idx)).join('')}
+        ${day.items.map((item, idx) => renderItemCard(item, day.date, idx, isApproved)).join('')}
       </div>`;
   }
 
-  function renderItemCard(item, date, idx) {
+  function renderItemCard(item, date, idx, dayApproved) {
     const priceLabel = item.isFree ? 'FREE' : `$${item.actualPrice.toFixed(0)}`;
     const priceCls = item.isFree ? 'free' : 'paid';
+    const fallbackSrc = item.rawImage || '';
+    const prevUseDate = getPreviousUseDate(item.listingUrl, date);
+    const dupBadge = prevUseDate 
+      ? `<span class="dup-badge" title="This listing URL was already used on ${formatDate(prevUseDate)}">⚠️ Duplicate (${formatDate(prevUseDate)})</span>`
+      : '';
+    
     return `
-      <div class="item-card" data-date="${date}" data-idx="${idx}">
+      <div class="item-card ${prevUseDate ? 'is-duplicate' : ''}" data-date="${date}" data-idx="${idx}">
         <div class="item-img-wrap">
           <img
             src="${item.image}"
             alt="${escapeHtml(item.title)}"
             loading="lazy"
-            onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'>🖼️</div>'"
+            onerror="if (this.src !== '${fallbackSrc}' && '${fallbackSrc}') { this.src = '${fallbackSrc}'; } else { this.onerror = null; this.parentElement.innerHTML='<div class=\\'img-placeholder\\'>🖼️</div>'; }"
           />
           <span class="price-badge ${priceCls}">${priceLabel}</span>
+          ${dupBadge}
         </div>
         <div class="item-body">
           <div class="item-title">${escapeHtml(item.title)}</div>
@@ -445,7 +911,7 @@
           <div class="item-meta">
             <span class="item-location">📍 ${escapeHtml(item.location || 'Canada')}</span>
             <div class="item-actions">
-              <button class="btn-sm btn-swap" data-action="swap" data-date="${date}" data-idx="${idx}">🔄 Swap</button>
+              <button class="btn-sm btn-swap" data-action="swap" data-date="${date}" data-idx="${idx}" ${dayApproved ? 'disabled title="Recurate this day to enable swapping"' : ''}>🔄 Swap</button>
               <a href="${item.listingUrl}" target="_blank" rel="noopener" class="btn-sm btn-link">View ↗</a>
             </div>
           </div>
@@ -467,27 +933,6 @@
     if (tab) {
       tab.querySelector('.status-dot').className = `status-dot ${day.status}`;
     }
-
-    attachEventListeners();
-  }
-
-  function attachEventListeners() {
-    // Swap buttons
-    document.querySelectorAll('[data-action="swap"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const date = btn.dataset.date;
-        const idx = parseInt(btn.dataset.idx);
-        await swapItem(date, idx);
-      });
-    });
-
-    // Approve buttons
-    document.querySelectorAll('[data-action="approve"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const date = btn.dataset.date;
-        await approveDay(date);
-      });
-    });
   }
 
   // ── Swap an item ──
@@ -496,17 +941,98 @@
     const currentItem = day.items[idx];
     const wantFree = currentItem.isFree;
 
-    // Prompt for blacklist reason
-    const reason = prompt(
-      `Are you swapping "${currentItem.title}"?\n\nIf it's because of a specific category/word (e.g. "service", "ticket", "shipping"), enter it below to blacklist it from future scrapes:\n(Otherwise, leave empty and click OK to just swap)`
-    );
+    const pool = wantFree ? poolData.freeItems : poolData.paidItems;
 
-    if (reason === null) {
-      // User clicked cancel
+    // Collect all listingUrl values currently used in any day of the preview week(s)
+    const usedUrls = new Set();
+    Object.values(weekData).forEach(d => {
+      if (d && d.items) {
+        d.items.forEach(item => {
+          if (item.listingUrl) usedUrls.add(item.listingUrl);
+        });
+      }
+    });
+
+    // Try to get items that are completely unique (not used in any loaded day)
+    let available = pool.filter(i => !usedUrls.has(i.listingUrl));
+
+    // If none are unique, fallback to just filtering out items used in the current day
+    if (available.length === 0) {
+      const currentDayUrls = new Set(day.items.map(i => i.listingUrl));
+      available = pool.filter(i => !currentDayUrls.has(i.listingUrl));
+    }
+
+    if (available.length === 0) {
+      showToast('No more items in the swap pool for this type.', 'error');
       return;
     }
 
-    const keyword = reason.trim().toLowerCase();
+    // Reset modal inputs
+    document.getElementById('blacklistInput').value = '';
+    document.getElementById('poolSearchInput').value = '';
+    document.getElementById('swapTargetTitle').textContent = `"${currentItem.title}"`;
+    document.getElementById('swapModal').style.display = 'flex';
+
+    // Render list helper
+    const renderPoolList = (searchTerm = '') => {
+      const listEl = document.getElementById('modalPoolList');
+      listEl.innerHTML = '';
+
+      const term = searchTerm.toLowerCase().trim();
+      const filtered = available.filter(i => i.title.toLowerCase().includes(term));
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div style="color: rgba(255,255,255,0.4); text-align: center; padding: 20px; font-size: 0.8rem;">No matching items in pool.</div>';
+        return;
+      }
+
+      filtered.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'modal-pool-item';
+        
+        const priceLabel = item.isFree ? 'FREE' : `$${item.actualPrice.toFixed(0)}`;
+        const thumbUrl = item.image || '';
+
+        itemEl.innerHTML = `
+          <img class="modal-pool-thumb" src="${thumbUrl}" alt="" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2245%22 height=%2235%22><rect width=%2245%22 height=%2235%22 fill=%22%23222%22/></svg>';" />
+          <div class="modal-pool-info">
+            <div class="modal-pool-title">${escapeHtml(item.title)}</div>
+            <div class="modal-pool-meta">📍 ${escapeHtml(item.location || 'Canada')} · ${priceLabel}</div>
+          </div>
+          <button class="modal-pool-select-btn">Select</button>
+        `;
+
+        itemEl.addEventListener('click', () => {
+          if (activeSwapResolve) {
+            activeSwapResolve(item);
+            activeSwapResolve = null;
+          }
+          document.getElementById('swapModal').style.display = 'none';
+        });
+
+        listEl.appendChild(itemEl);
+      });
+    };
+
+    renderPoolList();
+
+    // Wire search input using a single oninput handler to prevent multiple bindings
+    const searchInput = document.getElementById('poolSearchInput');
+    searchInput.oninput = (e) => renderPoolList(e.target.value);
+
+    // Wait for user selection from modal
+    const selectedItem = await new Promise((resolve) => {
+      activeSwapResolve = resolve;
+    });
+
+    if (!selectedItem) {
+      // User cancelled
+      return;
+    }
+
+    // Process blacklist keyword if entered
+    const blacklistReason = document.getElementById('blacklistInput').value;
+    const keyword = blacklistReason.trim().toLowerCase();
     if (keyword) {
       try {
         await setDoc(doc(db, 'item_pool', 'blacklist'), {
@@ -518,17 +1044,8 @@
       }
     }
 
-    const pool = wantFree ? poolData.freeItems : poolData.paidItems;
-    const usedIds = new Set(day.items.map(i => i.id));
-    const available = pool.filter(i => !usedIds.has(i.id));
-
-    if (available.length === 0) {
-      showToast('No more items in the swap pool for this type.', 'error');
-      return;
-    }
-
-    const replacement = available[Math.floor(Math.random() * available.length)];
-    day.items[idx] = { ...replacement, id: `${date}-slot${idx + 1}` };
+    // Perform swap
+    day.items[idx] = { ...selectedItem, id: `${date}-slot${idx + 1}` };
 
     // Persist to Firestore
     try {
@@ -558,13 +1075,30 @@
     }
   }
 
-  // ── Load data from Firestore ──
+  // ── Recurate a day (revert approved → draft) ──
+  async function recurateDay(date) {
+    const confirmed = confirm(
+      `Recurate ${formatDate(date)}?\n\nThis will set the day back to draft so you can swap items and re-approve it.\n\nPlayers who have not yet played will see the old content until you re-approve.`
+    );
+    if (!confirmed) return;
+    try {
+      await updateDoc(doc(db, 'daily_games', date), { status: 'draft' });
+      weekData[date].status = 'draft';
+      showToast(`${formatDate(date)} set back to draft.`);
+      refreshDayPanel(date);
+    } catch (err) {
+      console.error('Recurate failed:', err);
+      showToast('Recurate failed — check console', 'error');
+    }
+  }
+
+  // ── Load data from Firestore (up to 21 days ahead) ──
   async function loadWeekData() {
     try {
-      // Load this week's draft days (next 7 days)
+      // Check up to 21 days so two or three weeks of content are visible
       const today = new Date();
       const dates = [];
-      for (let d = 0; d < 7; d++) {
+      for (let d = 0; d < 21; d++) {
         const dt = new Date(today);
         dt.setDate(dt.getDate() + d);
         dates.push(new Intl.DateTimeFormat('en-CA', {
@@ -594,6 +1128,160 @@
           <p>${err.message}</p>
         </div>`;
     }
+  }
+
+  // ── Generate New Week helpers ──
+
+  // Returns the day offset from today at which the next ungenerated week starts.
+  // E.g. if 7 days of content exist, returns 7 (start day 7 = next Monday etc.)
+  function getNextWeekOffset() {
+    const dates = Object.keys(weekData).sort();
+    if (dates.length === 0) return 0;
+
+    const lastDate = dates[dates.length - 1];
+    const todayStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Toronto',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+
+    const lastDay   = new Date(lastDate + 'T12:00:00');
+    const todayDay  = new Date(todayStr + 'T12:00:00');
+    const diffDays  = Math.round((lastDay - todayDay) / (1000 * 60 * 60 * 24));
+    return diffDays + 1; // day AFTER the last existing day
+  }
+
+  // Wire up the generate section UI (called from buildUI)
+  function buildGenerateSection() {
+    const section = document.getElementById('generateSection');
+    if (!section) return;
+    section.style.display = 'block';
+
+    const isServer = window.location.protocol !== 'file:';
+
+    if (!isServer) {
+      // Running as file:// — can't hit /api/generate, show hint instead
+      document.getElementById('serverNotice').style.display = 'flex';
+      const btn = document.getElementById('generateBtn');
+      if (btn) btn.style.display = 'none';
+      return;
+    }
+
+    // Wire generate button
+    const btn = document.getElementById('generateBtn');
+    if (btn && !btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', startGeneration);
+    }
+
+    // Wire reload button
+    const reloadBtn = document.getElementById('reloadBtn');
+    if (reloadBtn && !reloadBtn.dataset.wired) {
+      reloadBtn.dataset.wired = '1';
+      reloadBtn.addEventListener('click', reloadContent);
+    }
+  }
+
+  async function startGeneration() {
+    const btn       = document.getElementById('generateBtn');
+    const logPanel  = document.getElementById('generateLog');
+    const logOutput = document.getElementById('logOutput');
+    const statusEl  = document.getElementById('generateStatus');
+    const doneEl    = document.getElementById('generateDone');
+
+    btn.disabled = true;
+    logPanel.style.display = 'block';
+    logOutput.innerHTML = '';
+    doneEl.style.display = 'none';
+    statusEl.innerHTML = '<span class="spinner"></span> Running generator...';
+    statusEl.style.color = '';
+
+    // Scroll log into view smoothly
+    logPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    const offset = getNextWeekOffset();
+
+    const appendLine = (text, cls) => {
+      if (text === undefined || text === null) return;
+      const span = document.createElement('span');
+      if (cls) span.className = cls;
+      span.textContent = text + '\n';
+      logOutput.appendChild(span);
+      logOutput.scrollTop = logOutput.scrollHeight;
+    };
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offset }),
+      });
+
+      if (!response.ok) throw new Error(`Server responded ${response.status}`);
+
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer  = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const parts = sseBuffer.split('\n\n');
+        sseBuffer = parts.pop(); // keep incomplete event
+
+        for (const part of parts) {
+          if (!part.startsWith('data: ')) continue;
+          let event;
+          try { event = JSON.parse(part.slice(6)); } catch (_) { continue; }
+
+          if (event.type === 'stdout') {
+            const isOk = /✅|Done|approved|pool/.test(event.text);
+            appendLine(event.text, isOk ? 'log-ok' : '');
+          } else if (event.type === 'stderr') {
+            appendLine(event.text, 'log-stderr');
+          } else if (event.type === 'done') {
+            if (event.code === 0) {
+              statusEl.innerHTML = '✅ Complete';
+              statusEl.style.color = '#00ff87';
+              showToast('Generation complete! Click Reload Content.');
+            } else {
+              statusEl.innerHTML = '❌ Failed (see log)';
+              statusEl.style.color = '#ff007f';
+              showToast('Generation failed — check the log', 'error');
+            }
+            doneEl.style.display = 'flex';
+          }
+        }
+      }
+    } catch (err) {
+      appendLine('Error: ' + err.message, 'log-stderr');
+      statusEl.innerHTML = '❌ Connection error';
+      statusEl.style.color = '#ff007f';
+      doneEl.style.display = 'flex';
+      showToast('Could not reach local server — is it running?', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function reloadContent() {
+    // Reset state and re-fetch all week data from Firestore
+    weekData  = {};
+    poolData  = { freeItems: [], paidItems: [] };
+
+    document.getElementById('generateLog').style.display  = 'none';
+    document.getElementById('generateSection').style.display = 'none';
+    document.getElementById('app').style.display          = 'none';
+    document.getElementById('loading').style.display      = 'block';
+    document.getElementById('loading').innerHTML = `
+      <div class="state-msg">
+        <div class="icon"><span class="spinner"></span></div>
+        <h3>Reloading...</h3>
+        <p>Fetching updated content from Firestore.</p>
+      </div>`;
+
+    await loadWeekData();
   }
 
   // ── Auth ──

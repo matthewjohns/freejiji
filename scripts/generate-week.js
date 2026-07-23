@@ -6,8 +6,10 @@
  * and extracts the listings from the embedded __NEXT_DATA__ JSON.
  *
  * Usage:
- *   node generate-week.js            # Full run — writes to Firestore
- *   node generate-week.js --dry-run  # Test run — no Firestore writes
+ *   node generate-week.js                 # Full run — writes to Firestore
+ *   node generate-week.js --dry-run       # Test run — no Firestore writes
+ *   node generate-week.js --force         # Regenerate ALL days, even approved ones
+ *   node generate-week.js --auto-approve  # Auto-approve generated days (status: 'ready')
  *
  * Requirements:
  *   1. npm install  (in this scripts/ directory)
@@ -22,7 +24,10 @@ const fs = require('fs');
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
-const DRY_RUN = process.argv.includes('--dry-run');
+const DRY_RUN      = process.argv.includes('--dry-run');
+const FORCE        = process.argv.includes('--force');
+const AUTO_APPROVE = process.argv.includes('--auto-approve');
+const OFFSET       = parseInt((process.argv.find(a => a.startsWith('--offset=')) || '--offset=0').replace('--offset=', ''), 10) || 0;
 const FIREBASE_PROJECT_ID = 'freejiji-4e401';
 const ITEMS_PER_DAY = 10;
 const DAYS_TO_GENERATE = 7;
@@ -52,9 +57,7 @@ const HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
-// ─── Image proxy (wsrv.nl) ────────────────────────────────────────────────────
-
-function proxyImageUrl(originalUrl) {
+function getCleanImageUrl(originalUrl) {
   if (!originalUrl) return null;
   let cleanUrl = originalUrl;
   if (cleanUrl.includes('media.kijiji.ca')) {
@@ -63,6 +66,12 @@ function proxyImageUrl(originalUrl) {
   } else {
     cleanUrl = cleanUrl.replace(/\/s-l\d+(\.\w+)$/, '/s-l1200$1').split('?')[0];
   }
+  return cleanUrl;
+}
+
+function proxyImageUrl(originalUrl) {
+  const cleanUrl = getCleanImageUrl(originalUrl);
+  if (!cleanUrl) return null;
   return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&w=800&h=600&fit=inside&output=webp&q=80`;
 }
 
@@ -135,6 +144,7 @@ function parseListing(raw, type) {
 
   // Image
   const images = raw.imageUrls || [];
+  const rawImage = getCleanImageUrl(images[0]);
   const image = proxyImageUrl(images[0]);
 
   // URL
@@ -152,7 +162,7 @@ function parseListing(raw, type) {
   // Category ID
   const categoryId = raw.categoryId || 0;
 
-  return { id, title, description, image, actualPrice, isFree, listingUrl, location, dateStr, adSource, categoryId };
+  return { id, title, description, image, rawImage, actualPrice, isFree, listingUrl, location, dateStr, adSource, categoryId };
 }
 
 async function scrapePool(baseUrl, type, targetCount) {
@@ -266,8 +276,11 @@ function pickRandom(pool, usedIds) {
 
 async function main() {
   console.log('\n🎮  Freejiji Weekly Content Generator');
-  console.log(`📅  Generating ${DAYS_TO_GENERATE} days starting today (Toronto time)`);
-  if (DRY_RUN) console.log('🧪  DRY RUN — nothing written to Firestore\n');
+  console.log(`📅  Generating ${DAYS_TO_GENERATE} days starting from day ${OFFSET} (Toronto time)`);
+  if (DRY_RUN)      console.log('🧪  DRY RUN — nothing written to Firestore\n');
+  if (FORCE)        console.log('⚠️   FORCE mode — will overwrite approved days too\n');
+  if (AUTO_APPROVE) console.log('✅  AUTO-APPROVE — generated days will be set to "ready" immediately\n');
+  if (OFFSET)       console.log(`⏩   OFFSET mode — starting from day +${OFFSET}\n`);
 
   const db = initFirebase();
   console.log('✅  Firebase connected\n');
@@ -285,6 +298,49 @@ async function main() {
     console.error('Failed to load blacklist from Firestore:', err.message);
   }
 
+  // ── Pre-check Firestore: find which dates are already approved ──
+  // Do this BEFORE scraping so we can skip expensive Kijiji requests if not needed.
+  console.log('🔍  Checking existing Firestore content...');
+  const allTargetDates = Array.from({ length: DAYS_TO_GENERATE }, (_, d) => getTorontoDateString(d + OFFSET));
+  const approvedDays    = []; // already approved — will be left untouched
+  const datesToGenerate = []; // need scraping/generation
+  const usedListingUrls = new Set(); // dedup between approved days and freshly generated ones
+
+  if (!DRY_RUN) {
+    await Promise.all(allTargetDates.map(async (date) => {
+      try {
+        const snap = await db.collection('daily_games').doc(date).get();
+        if (snap.exists && snap.data().status === 'ready' && !FORCE) {
+          console.log(`  ✅  ${date} already approved — skipping`);
+          const data = snap.data();
+          approvedDays.push(data);
+          (data.items || []).forEach(i => { if (i.listingUrl) usedListingUrls.add(i.listingUrl); });
+        } else {
+          if (snap.exists && snap.data().status === 'ready' && FORCE) {
+            console.log(`  ⚠️   ${date} is approved but --force is set — will regenerate`);
+          } else {
+            console.log(`  📝  ${date} needs generation`);
+          }
+          datesToGenerate.push(date);
+        }
+      } catch (err) {
+        console.error(`  ❌  Error checking ${date}:`, err.message);
+        datesToGenerate.push(date);
+      }
+    }));
+  } else {
+    // In dry-run mode, treat all dates as needing generation
+    allTargetDates.forEach(d => datesToGenerate.push(d));
+  }
+
+  if (datesToGenerate.length === 0) {
+    console.log('\n✅  All 7 days are already approved. Nothing to generate.');
+    console.log('    Run with --force to regenerate approved days anyway.\n');
+    return;
+  }
+
+  console.log(`\n📋  Will generate ${datesToGenerate.length} of ${DAYS_TO_GENERATE} day(s). Scraping now...\n`);
+
   // ── Scrape FREE pool ──
   console.log('🆓  Scraping FREE items (Kijiji Free Stuff, Canada)...');
   const FREE_URL = 'https://www.kijiji.ca/b-free-stuff/canada/c17220001l0';
@@ -300,21 +356,25 @@ async function main() {
   if (freePool.length < 10) { console.error('❌  Too few free items. Check debug files.'); process.exit(1); }
   if (paidPool.length < 10) { console.error('❌  Too few paid items. Check debug files.'); process.exit(1); }
 
-  // ── Build 7 days ──
+  // ── Build days (only those that need generation) ──
   const usedFreeIds = new Set();
   const usedPaidIds = new Set();
   const generatedDays = [];
 
-  console.log('📅  Building daily item sets...\n');
+  // Also exclude IDs of any item already used in an approved day
+  // (map listingUrl → id not available here; URL dedup is enough for pool filtering)
+  const poolFreeFiltered = freePool.filter(i => !usedListingUrls.has(i.listingUrl));
+  const poolPaidFiltered = paidPool.filter(i => !usedListingUrls.has(i.listingUrl));
 
-  for (let d = 0; d < DAYS_TO_GENERATE; d++) {
-    const dateStr = getTorontoDateString(d);
+  console.log(`📅  Building daily item sets (${datesToGenerate.length} days)...\n`);
+
+  for (const dateStr of datesToGenerate) {
     const dayItems = [];
 
     for (let slot = 0; slot < ITEMS_PER_DAY; slot++) {
       const wantFree = Math.random() < 0.5;
-      let item = pickRandom(wantFree ? freePool : paidPool, wantFree ? usedFreeIds : usedPaidIds);
-      if (!item) item = pickRandom(!wantFree ? freePool : paidPool, !wantFree ? usedFreeIds : usedPaidIds);
+      let item = pickRandom(wantFree ? poolFreeFiltered : poolPaidFiltered, wantFree ? usedFreeIds : usedPaidIds);
+      if (!item) item = pickRandom(!wantFree ? poolFreeFiltered : poolPaidFiltered, !wantFree ? usedFreeIds : usedPaidIds);
       if (!item) continue;
 
       (item.isFree ? usedFreeIds : usedPaidIds).add(item.id);
@@ -334,19 +394,23 @@ async function main() {
   if (DRY_RUN) {
     console.log('\n🧪  DRY RUN — sample day 1:');
     console.log(JSON.stringify(generatedDays[0], null, 2));
+    if (approvedDays.length > 0) {
+      console.log(`\n  (${approvedDays.length} already-approved day(s) would be skipped)`);
+    }
     console.log('\n✅  Done. Nothing was written to Firestore.\n');
     return;
   }
 
-  // ── Write to Firestore ──
+  // ── Write to Firestore (only newly generated days) ──
   console.log('\n💾  Writing to Firestore...');
   const batch = db.batch();
 
+  const writeStatus = AUTO_APPROVE ? 'ready' : 'draft';
   for (const day of generatedDays) {
     batch.set(db.collection('daily_games').doc(day.date), {
       date: day.date,
       items: day.items,
-      status: 'draft',
+      status: writeStatus,
       generatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   }
@@ -359,7 +423,10 @@ async function main() {
 
   await batch.commit();
 
-  console.log(`\n✅  ${generatedDays.length} days written to Firestore as "draft"`);
+  console.log(`\n✅  ${generatedDays.length} day(s) written to Firestore as "${writeStatus}"`);
+  if (approvedDays.length > 0) {
+    console.log(`✅  ${approvedDays.length} already-approved day(s) left untouched`);
+  }
   console.log('✅  Swap pool saved');
   console.log('\n🎨  Open scripts/preview-tool.html to review and approve!\n');
 }

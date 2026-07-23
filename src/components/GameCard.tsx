@@ -17,6 +17,12 @@ export const GameCard: React.FC<GameCardProps> = ({ item }) => {
           alt={item.title}
           className="card-image"
           draggable={false}
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (item.rawImage && img.src !== item.rawImage) {
+              img.src = item.rawImage;
+            }
+          }}
         />
       </div>
 

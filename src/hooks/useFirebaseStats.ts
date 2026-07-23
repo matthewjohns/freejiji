@@ -86,14 +86,49 @@ export const useFirebaseStats = () => {
           });
         }
 
-        setStats({
+        const finalStats = {
           ...data,
           currentStreak,
           scoreDistribution
-        });
+        };
+
+        // Backup stats to localStorage
+        try {
+          localStorage.setItem('freejiji_user_stats_backup', JSON.stringify(finalStats));
+        } catch (e) {
+          console.error('Failed to back up stats to localStorage:', e);
+        }
+
+        setStats(finalStats);
       } else {
-        // Initialize new user stats doc
-        const initialStats: UserStats = {
+        // Doc does not exist in Firestore. Check if we have backup stats in localStorage.
+        let restoredStats: UserStats | null = null;
+        try {
+          const backupStr = localStorage.getItem('freejiji_user_stats_backup');
+          if (backupStr) {
+            const backupData = JSON.parse(backupStr);
+            if (backupData && typeof backupData === 'object') {
+              restoredStats = {
+                uid,
+                createdAt: backupData.createdAt || serverTimestamp(),
+                lastActive: serverTimestamp(),
+                allTimeScore: backupData.allTimeScore || 0,
+                gamesPlayed: backupData.gamesPlayed || 0,
+                currentStreak: backupData.currentStreak || 0,
+                maxStreak: backupData.maxStreak || 0,
+                lastPlayedDate: backupData.lastPlayedDate || '',
+                scoreDistribution: backupData.scoreDistribution || {
+                  0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
+                }
+              };
+              console.log('Restoring user stats from localStorage backup for new session UID:', uid);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to read/parse stats backup from localStorage:', e);
+        }
+
+        const initialStats: UserStats = restoredStats || {
           uid,
           createdAt: serverTimestamp(),
           lastActive: serverTimestamp(),
@@ -106,12 +141,44 @@ export const useFirebaseStats = () => {
             0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
           }
         };
+
+        // Write the stats to the new UID document in Firestore
         await setDoc(userDocRef, initialStats);
+
+        // If we restored stats and we have a local history backup for that last played date, let's restore it too!
+        if (restoredStats && restoredStats.lastPlayedDate) {
+          try {
+            const historyBackupStr = localStorage.getItem(`freejiji_history_backup_${restoredStats.lastPlayedDate}`);
+            if (historyBackupStr) {
+              const historyBackup = JSON.parse(historyBackupStr);
+              if (historyBackup && typeof historyBackup === 'object') {
+                const scoreDocRef = doc(db, 'users', uid, 'history', restoredStats.lastPlayedDate);
+                await setDoc(scoreDocRef, {
+                  date: restoredStats.lastPlayedDate,
+                  score: historyBackup.score || 0,
+                  guesses: historyBackup.guesses || [],
+                  userSwipes: historyBackup.userSwipes || [],
+                  timestamp: serverTimestamp()
+                });
+                console.log('Restored daily history from localStorage backup for date:', restoredStats.lastPlayedDate);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to read/restore daily history from localStorage backup:', e);
+          }
+        }
 
         // Fetch back (to get proper initialized format)
         const freshSnap = await getDoc(userDocRef);
         if (freshSnap.exists()) {
-          setStats(freshSnap.data() as UserStats);
+          const freshData = freshSnap.data() as UserStats;
+          // Backup again
+          try {
+            localStorage.setItem('freejiji_user_stats_backup', JSON.stringify(freshData));
+          } catch (e) {
+            console.error('Failed to back up stats to localStorage:', e);
+          }
+          setStats(freshData);
         }
       }
     } catch (error) {
@@ -192,6 +259,17 @@ export const useFirebaseStats = () => {
         timestamp: serverTimestamp()
       });
 
+      // Save history backup to localStorage
+      try {
+        localStorage.setItem(`freejiji_history_backup_${todayStr}`, JSON.stringify({
+          score,
+          guesses,
+          userSwipes
+        }));
+      } catch (e) {
+        console.error('Failed to save history backup to localStorage:', e);
+      }
+
       // 2. Perform transaction to update global correctness on daily_games/{date}
       const dailyGameRef = doc(db, 'daily_games', todayStr);
       let updatedItemsList = [...currentItems];
@@ -240,10 +318,20 @@ export const useFirebaseStats = () => {
       await updateDoc(userDocRef, updatedStatsData);
 
       // 4. Update local state
-      setStats((prev) => prev ? {
-        ...prev,
-        ...updatedStatsData
-      } : null);
+      setStats((prev) => {
+        const next = prev ? {
+          ...prev,
+          ...updatedStatsData
+        } : null;
+        if (next) {
+          try {
+            localStorage.setItem('freejiji_user_stats_backup', JSON.stringify(next));
+          } catch (e) {
+            console.error('Failed to backup stats to localStorage:', e);
+          }
+        }
+        return next;
+      });
 
       return {
         items: updatedItemsList,
@@ -277,6 +365,14 @@ export const useFirebaseStats = () => {
 
       const scoreDocRef = doc(db, 'users', user.uid, 'history', gameDate);
       await deleteDoc(scoreDocRef);
+
+      // Clear local backups as well
+      try {
+        localStorage.removeItem('freejiji_user_stats_backup');
+        localStorage.removeItem(`freejiji_history_backup_${gameDate}`);
+      } catch (e) {
+        console.error('Failed to clear backups in resetStats:', e);
+      }
 
       setStats(initialStats);
       return true;

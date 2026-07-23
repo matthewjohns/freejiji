@@ -3,6 +3,7 @@ export interface KijijiItem {
   title: string;
   description: string;
   image: string;
+  rawImage?: string;
   actualPrice: number;
   isFree: boolean;
   listingUrl: string;

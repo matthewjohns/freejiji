@@ -28,6 +28,7 @@ function App() {
     title: string;
     description: string;
     image: string;
+    rawImage?: string;
     location: string;
   } | null>(null);
 
@@ -179,6 +180,7 @@ function App() {
       title: item.title,
       description: item.description,
       image: item.image,
+      rawImage: item.rawImage,
       location: item.location,
     });
 
@@ -420,6 +422,12 @@ function App() {
                 src={feedback.image}
                 alt={feedback.title}
                 className="w-32 h-20 rounded-xl object-cover border border-white/10 mb-1"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (feedback.rawImage && img.src !== feedback.rawImage) {
+                    img.src = feedback.rawImage;
+                  }
+                }}
               />
 
               {/* Verdict Row */}

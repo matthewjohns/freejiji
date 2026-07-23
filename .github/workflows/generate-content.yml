@@ -1,0 +1,39 @@
+name: Weekly Content Generation
+
+# Runs every Wednesday at 4:00 AM UTC (midnight ET / 11pm CT)
+# This gives a full buffer before the daily game reset at 3:00 AM Toronto time
+on:
+  schedule:
+    - cron: '0 4 * * 3'  # Every Wednesday at 04:00 UTC
+  workflow_dispatch:       # Allow manual triggers from the GitHub Actions UI
+
+jobs:
+  generate-weekly-content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install script dependencies
+        working-directory: scripts
+        run: npm ci
+
+      - name: Write Firebase service account key
+        working-directory: scripts
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
+
+      - name: Generate weekly content
+        working-directory: scripts
+        run: node generate-week.js --auto-approve
+
+      - name: Cleanup service account key
+        if: always()
+        working-directory: scripts
+        run: rm -f service-account.json

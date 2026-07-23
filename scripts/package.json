@@ -6,7 +6,8 @@
   "scripts": {
     "generate": "node generate-week.js",
     "dry-run": "node generate-week.js --dry-run",
-    "preview": "open preview-tool.html"
+    "preview": "open preview-tool.html",
+    "server": "node preview-server.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

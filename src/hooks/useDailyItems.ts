@@ -82,6 +82,7 @@ export function useDailyItems(isAuthenticated: boolean): DailyItemsResult {
           title: item.title,
           description: item.description,
           image: item.image,
+          rawImage: item.rawImage,
           actualPrice: item.actualPrice ?? 0,
           isFree: item.isFree ?? false,
           listingUrl: item.listingUrl,

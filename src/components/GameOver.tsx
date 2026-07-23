@@ -143,13 +143,49 @@ export const GameOver: React.FC<GameOverProps> = ({
     const averageText = stats ? `\nAverage: ${avgScore}` : '';
     const streakText = stats ? `\nStreak: 🔥 ${stats.currentStreak}` : '';
 
-    const shareMessage = `${performanceText}${dateText}\n${emojiSequence}${averageText}${streakText}\nhttps://lasermammoth.ca/freejiji`;
+    const isItch = window.location.hostname.includes('itch.io') || window.location.hostname.includes('itch.zone');
+    const gameUrl = isItch ? 'https://lasermammoth.itch.io/freejiji' : 'https://lasermammoth.ca/freejiji';
+    const shareMessage = `${performanceText}${dateText}\n${emojiSequence}${averageText}${streakText}\n${gameUrl}`;
 
-    navigator.clipboard.writeText(shareMessage).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
+    const fallbackCopy = (text: string) => {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      } catch (err) {
+        console.error('Fallback copy failed:', err);
+        return false;
+      }
+    };
+
+    const performCopy = async () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareMessage);
+          return true;
+        } catch (err) {
+          console.warn('Clipboard API failed, trying fallback:', err);
+        }
+      }
+      return fallbackCopy(shareMessage);
+    };
+
+    performCopy().then((success) => {
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        window.prompt("Could not copy automatically. You can copy it manually from here:", shareMessage);
+      }
     });
   };
 
@@ -276,6 +312,12 @@ export const GameOver: React.FC<GameOverProps> = ({
                   src={item.image}
                   alt={item.title}
                   className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (item.rawImage && img.src !== item.rawImage) {
+                      img.src = item.rawImage;
+                    }
+                  }}
                 />
 
                 {/* Info */}
