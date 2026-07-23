@@ -27,7 +27,13 @@ const fs = require('fs');
 const DRY_RUN      = process.argv.includes('--dry-run');
 const FORCE        = process.argv.includes('--force');
 const AUTO_APPROVE = process.argv.includes('--auto-approve');
-const OFFSET       = parseInt((process.argv.find(a => a.startsWith('--offset=')) || '--offset=0').replace('--offset=', ''), 10) || 0;
+const offsetArg    = process.argv.find(a => a.startsWith('--offset='));
+const OFFSET       = offsetArg ? Number(offsetArg.slice('--offset='.length)) : 0;
+
+if (!Number.isInteger(OFFSET) || OFFSET < 0) {
+  console.error('\n❌ --offset must be a non-negative whole number (for example, --offset=1).');
+  process.exit(1);
+}
 const FIREBASE_PROJECT_ID = 'freejiji-4e401';
 const ITEMS_PER_DAY = 10;
 const DAYS_TO_GENERATE = 7;
@@ -40,7 +46,19 @@ const CATEGORY_BUY_SELL = 10;
 // Category IDs to exclude from paid results (tickets=104, garage sales=272, free stuff=17220001)
 const EXCLUDED_PAID_CATEGORY_IDS = new Set([104, 272, 17220001]);
 
-const BANNED_KEYWORDS = ['pickup', 'pick up', 'pick-up', 'scrap', 'service', 'services'];
+// Common Kijiji posts that are not suitable game items. These are matched as
+// complete words/phrases, so a blacklist term such as "rates" will not reject
+// an unrelated word such as "crates".
+const BANNED_KEYWORDS = [
+  'pickup', 'pick up', 'pick-up',
+  'scrap',
+  'service', 'services', 'repair', 'repairs',
+  'free setup', 'month free', 'months free', 'no credit check',
+  'trial period', 'no obligation', 'customized survey', 'customized surveys', 'mudding',
+  'looking for', 'in search of', 'in need of', 'iso', 'recherche',
+  'puppy', 'puppies', 'kitten', 'kittens', 'golden retriever',
+  'goldfish', 'minnow', 'minnows', 'rehome', 'rehoming',
+];
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -90,9 +108,18 @@ function isWithinTwoWeeks(dateStr) {
 let remoteBannedKeywords = [];
 
 function getBannedKeywordMatch(title = '', description = '') {
-  const combined = `${title} ${description}`.toLowerCase();
+  const combined = `${title} ${description}`;
   const allBanned = [...BANNED_KEYWORDS, ...remoteBannedKeywords];
-  return allBanned.find(kw => combined.includes(kw.toLowerCase()));
+  return allBanned.find(keyword => {
+    const trimmed = String(keyword).trim();
+    if (!trimmed) return false;
+
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const startsWithWord = /^[a-z0-9]/i.test(trimmed);
+    const endsWithWord = /[a-z0-9]$/i.test(trimmed);
+    const pattern = `${startsWithWord ? '\\b' : ''}${escaped}${endsWithWord ? '\\b' : ''}`;
+    return new RegExp(pattern, 'i').test(combined);
+  });
 }
 
 // ─── Scrape a pool of items ────────────────────────────────────────────────────
@@ -253,13 +280,31 @@ function getTorontoDateString(daysFromNow = 0) {
 
 function initFirebase() {
   const svcPath = path.join(__dirname, 'service-account.json');
-  if (!fs.existsSync(svcPath)) {
+  let serviceAccount;
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (err) {
+      throw new Error(`FIREBASE_SERVICE_ACCOUNT is not valid JSON: ${err.message}`);
+    }
+  } else if (fs.existsSync(svcPath)) {
+    serviceAccount = JSON.parse(fs.readFileSync(svcPath, 'utf8'));
+  } else {
     console.error('\n❌ Missing service-account.json');
     console.error('  Download: https://console.firebase.google.com/project/freejiji-4e401/settings/serviceaccounts/adminsdk');
+    console.error('  For automation, set the FIREBASE_SERVICE_ACCOUNT environment variable instead.');
     process.exit(1);
   }
+
+  if (serviceAccount.project_id && serviceAccount.project_id !== FIREBASE_PROJECT_ID) {
+    throw new Error(
+      `Firebase credential is for project "${serviceAccount.project_id}", expected "${FIREBASE_PROJECT_ID}".`
+    );
+  }
+
   admin.initializeApp({
-    credential: admin.credential.cert(require(svcPath)),
+    credential: admin.credential.cert(serviceAccount),
     projectId: FIREBASE_PROJECT_ID,
   });
   return admin.firestore();
@@ -304,33 +349,35 @@ async function main() {
   const allTargetDates = Array.from({ length: DAYS_TO_GENERATE }, (_, d) => getTorontoDateString(d + OFFSET));
   const approvedDays    = []; // already approved — will be left untouched
   const datesToGenerate = []; // need scraping/generation
-  const usedListingUrls = new Set(); // dedup between approved days and freshly generated ones
+  const usedListingUrls = new Set(); // dedup against recent, approved, and newly generated games
 
-  if (!DRY_RUN) {
-    await Promise.all(allTargetDates.map(async (date) => {
-      try {
-        const snap = await db.collection('daily_games').doc(date).get();
-        if (snap.exists && snap.data().status === 'ready' && !FORCE) {
-          console.log(`  ✅  ${date} already approved — skipping`);
-          const data = snap.data();
-          approvedDays.push(data);
-          (data.items || []).forEach(i => { if (i.listingUrl) usedListingUrls.add(i.listingUrl); });
-        } else {
-          if (snap.exists && snap.data().status === 'ready' && FORCE) {
-            console.log(`  ⚠️   ${date} is approved but --force is set — will regenerate`);
-          } else {
-            console.log(`  📝  ${date} needs generation`);
-          }
-          datesToGenerate.push(date);
-        }
-      } catch (err) {
-        console.error(`  ❌  Error checking ${date}:`, err.message);
-        datesToGenerate.push(date);
+  // Read recent and future games once so listings are not repeated week-to-week.
+  // If this read fails, abort rather than risk replacing approved content.
+  const recentStart = getTorontoDateString(-14);
+  const existingSnapshot = await db.collection('daily_games')
+    .where('date', '>=', recentStart)
+    .get();
+  const existingByDate = new Map(existingSnapshot.docs.map(doc => [doc.id, doc.data()]));
+
+  for (const data of existingByDate.values()) {
+    (data.items || []).forEach(item => {
+      if (item.listingUrl) usedListingUrls.add(item.listingUrl);
+    });
+  }
+
+  for (const date of allTargetDates) {
+    const data = existingByDate.get(date);
+    if (data?.status === 'ready' && !FORCE) {
+      console.log(`  ✅  ${date} already approved — skipping`);
+      approvedDays.push(data);
+    } else {
+      if (data?.status === 'ready' && FORCE) {
+        console.log(`  ⚠️   ${date} is approved but --force is set — will regenerate`);
+      } else {
+        console.log(`  📝  ${date} needs generation`);
       }
-    }));
-  } else {
-    // In dry-run mode, treat all dates as needing generation
-    allTargetDates.forEach(d => datesToGenerate.push(d));
+      datesToGenerate.push(date);
+    }
   }
 
   if (datesToGenerate.length === 0) {
@@ -365,6 +412,14 @@ async function main() {
   // (map listingUrl → id not available here; URL dedup is enough for pool filtering)
   const poolFreeFiltered = freePool.filter(i => !usedListingUrls.has(i.listingUrl));
   const poolPaidFiltered = paidPool.filter(i => !usedListingUrls.has(i.listingUrl));
+  const itemsNeeded = datesToGenerate.length * ITEMS_PER_DAY;
+
+  if (poolFreeFiltered.length + poolPaidFiltered.length < itemsNeeded) {
+    throw new Error(
+      `Only ${poolFreeFiltered.length + poolPaidFiltered.length} unique listings remain after deduplication; ` +
+      `${itemsNeeded} are required. No content was written.`
+    );
+  }
 
   console.log(`📅  Building daily item sets (${datesToGenerate.length} days)...\n`);
 
@@ -384,11 +439,18 @@ async function main() {
     const freeCount = dayItems.filter(i => i.isFree).length;
     const paidCount = dayItems.filter(i => !i.isFree).length;
     console.log(`  ${dateStr}: ${dayItems.length} items (${freeCount} free / ${paidCount} paid)`);
+
+    if (dayItems.length !== ITEMS_PER_DAY) {
+      throw new Error(
+        `${dateStr} received ${dayItems.length} items instead of ${ITEMS_PER_DAY}. No content was written.`
+      );
+    }
+
     generatedDays.push({ date: dateStr, items: dayItems });
   }
 
-  const unusedFree = freePool.filter(i => !usedFreeIds.has(i.id));
-  const unusedPaid = paidPool.filter(i => !usedPaidIds.has(i.id));
+  const unusedFree = poolFreeFiltered.filter(i => !usedFreeIds.has(i.id));
+  const unusedPaid = poolPaidFiltered.filter(i => !usedPaidIds.has(i.id));
   console.log(`\n  Swap pool: ${unusedFree.length} free + ${unusedPaid.length} paid remaining`);
 
   if (DRY_RUN) {
@@ -428,10 +490,18 @@ async function main() {
     console.log(`✅  ${approvedDays.length} already-approved day(s) left untouched`);
   }
   console.log('✅  Swap pool saved');
-  console.log('\n🎨  Open scripts/preview-tool.html to review and approve!\n');
+  if (AUTO_APPROVE) {
+    console.log('\n🚀  Generated content is live.\n');
+  } else {
+    console.log('\n🎨  Open scripts/preview-tool.html to review and approve!\n');
+  }
 }
 
-main().catch(err => {
-  console.error('\n💥  Fatal error:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(err => {
+    console.error('\n💥  Fatal error:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { getBannedKeywordMatch };

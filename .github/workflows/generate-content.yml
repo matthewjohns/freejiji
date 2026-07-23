@@ -1,11 +1,23 @@
 name: Weekly Content Generation
 
-# Runs every Wednesday at 4:00 AM UTC (midnight ET / 11pm CT)
-# This gives a full buffer before the daily game reset at 3:00 AM Toronto time
+# Run Tuesday morning in Toronto and prepare Wednesday through Tuesday.
+# 09:00 UTC is 4am EST / 5am EDT, safely after Tuesday's 3am game reset.
 on:
   schedule:
-    - cron: '0 4 * * 3'  # Every Wednesday at 04:00 UTC
-  workflow_dispatch:       # Allow manual triggers from the GitHub Actions UI
+    - cron: '0 9 * * 2'
+  workflow_dispatch:
+    inputs:
+      offset:
+        description: 'Days from today to start (use 0 to fill missing content now)'
+        required: true
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-content-generation
+  cancel-in-progress: false
 
 jobs:
   generate-weekly-content:
@@ -25,15 +37,14 @@ jobs:
         working-directory: scripts
         run: npm ci
 
-      - name: Write Firebase service account key
-        working-directory: scripts
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
-
       - name: Generate weekly content
         working-directory: scripts
-        run: node generate-week.js --auto-approve
-
-      - name: Cleanup service account key
-        if: always()
-        working-directory: scripts
-        run: rm -f service-account.json
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GENERATION_OFFSET: ${{ github.event_name == 'schedule' && '1' || inputs.offset }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo 'FIREBASE_SERVICE_ACCOUNT repository secret is not configured.' >&2
+            exit 1
+          fi
+          node generate-week.js --auto-approve --offset="$GENERATION_OFFSET"
